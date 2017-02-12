@@ -22,31 +22,32 @@ namespace PuzzleFighter {
 			;
 		}
 
-		public void dropCurrent() {
-			if (currentPiece.b1.y == currentPiece.b2.y &&
-				currentPiece.b1.y + 1 < 14 &&
-				grid[currentPiece.b1.x, currentPiece.b1.y + 1] == null &&
-				grid[currentPiece.b2.x, currentPiece.b2.y + 1] == null) {
-				currentPiece.move(Piece.Direction.Down);
-			} else if (currentPiece.b1.y + 1 < 14 &&
-				currentPiece.b1.y > currentPiece.b2.y &&
-				grid[currentPiece.b1.x, currentPiece.b1.y + 1] == null) {
-				currentPiece.move(Piece.Direction.Down);
-			} else if (currentPiece.b2.y + 1 < 14 &&
-				currentPiece.b2.y > currentPiece.b1.y &&
-				grid[currentPiece.b2.x, currentPiece.b2.y + 1] == null) {
-				currentPiece.move(Piece.Direction.Down);
-			} else {
-				lockPiece();
+		public void moveCurrent(Piece.Direction d) {
+			try {
+				if (grid[currentPiece.b1.x + Piece.directionVectors[(int)d, 0], currentPiece.b1.y + Piece.directionVectors[(int)d, 1]] == null &&
+					grid[currentPiece.b2.x + Piece.directionVectors[(int)d, 0], currentPiece.b2.y + Piece.directionVectors[(int)d, 1]] == null) {
+					currentPiece.move(d);
+				} else if (d == Piece.Direction.Down) { lockPiece(); }
+			} catch {
+				if (d == Piece.Direction.Down) { lockPiece(); }
 			}
+		}
+
+		public void rotateCurrent() {
+
 		}
 
 		public void lockPiece() {
 			grid[currentPiece.b1.x, currentPiece.b1.y] = currentPiece.b1;
 			grid[currentPiece.b2.x, currentPiece.b2.y] = currentPiece.b2;
-			currentPiece = new Piece();
+			// clear blocks
+			dropBlocks();
+			if (grid[xSize/2, 0] == null && grid[xSize/2, 1] ==  null) {
+				currentPiece = new Piece(xSize, ySize);
+			} else { // game over 
+			}
 		}
-		
+
 		public void dropBlocks() {
 			for (int i = 0; i < xSize; i++) {
 				for (int j = ySize-2; j >= 0; j--) {
@@ -64,7 +65,7 @@ namespace PuzzleFighter {
 		}
 
 		public void clearBlocks() {
-
+			// do things
 		}
 
 		public void printGrid() {
