@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using System.Collections;
 
 namespace PuzzleFighter {
 	public class Board {
@@ -23,15 +24,16 @@ namespace PuzzleFighter {
 			bool changed;
 			do {
 				changed = dropBlocks();
-				clearBlocks(null);
+				clearBlocks();
 			} while (changed);
 		}
 
 		public void moveCurrent(Piece.Direction d) {
-			if (checkValid(	currentPiece.b1.x + Piece.directionVectors[(int)d][0],
-							currentPiece.b1.y + Piece.directionVectors[(int)d][1],
-							currentPiece.b2.x + Piece.directionVectors[(int)d][0],
-							currentPiece.b2.y + Piece.directionVectors[(int)d][1])) {
+			if (checkValid(currentPiece.b1.x + Piece.directionVectors[(int)d][0], currentPiece.b1.y + Piece.directionVectors[(int)d][1]) &&
+				checkValid(currentPiece.b2.x + Piece.directionVectors[(int)d][0], currentPiece.b2.y + Piece.directionVectors[(int)d][1]) &&
+				grid[currentPiece.b1.x + Piece.directionVectors[(int)d][0], currentPiece.b1.y + Piece.directionVectors[(int)d][1]] == null &&
+				grid[currentPiece.b2.x + Piece.directionVectors[(int)d][0], currentPiece.b2.y + Piece.directionVectors[(int)d][1]] == null)
+				 {
 				currentPiece.move(d);
 			} else if (d == Piece.Direction.Down) {
 				lockPiece();
@@ -42,16 +44,16 @@ namespace PuzzleFighter {
 			int[] pieceVector = new int[2] { currentPiece.b1.x - currentPiece.b2.x, currentPiece.b1.y - currentPiece.b2.y };
 			Complex i = new Complex(pieceVector[0], pieceVector[1]);
 			Complex delta = d == Piece.rotateDirection.CCW ? Complex.Multiply(i, new Complex(0, 1)) : Complex.Multiply(i, new Complex(0, -1));
-			if (checkValid(	currentPiece.b2.x + (int)delta.Real, 
-							currentPiece.b2.y + (int)delta.Imaginary,
-							currentPiece.b1.x,
-							currentPiece.b1.y)) {
+			if (checkValid(currentPiece.b2.x + (int)delta.Real, currentPiece.b2.y + (int)delta.Imaginary) &&
+				checkValid(currentPiece.b1.x, currentPiece.b1.y) &&
+				grid[currentPiece.b2.x + (int)delta.Real, currentPiece.b2.y + (int)delta.Imaginary] == null &&
+				grid[currentPiece.b1.x, currentPiece.b1.y] == null) {
 				currentPiece.b1.x = currentPiece.b2.x + (int)delta.Real;
 				currentPiece.b1.y = currentPiece.b2.y + (int)delta.Imaginary;
-			} else if (checkValid(	currentPiece.b2.x - (int)delta.Real,
-									currentPiece.b2.y - (int)delta.Imaginary,
-									currentPiece.b1.x,
-									currentPiece.b1.y)) {
+			} else if (	checkValid(currentPiece.b2.x - (int)delta.Real, currentPiece.b2.y - (int)delta.Imaginary) &&
+						checkValid(currentPiece.b1.x, currentPiece.b1.y) &&
+						grid[currentPiece.b2.x - (int)delta.Real, currentPiece.b2.y - (int)delta.Imaginary]== null &&
+						grid[currentPiece.b2.x - (int)delta.Real, currentPiece.b2.y - (int)delta.Imaginary] == null) {
 				currentPiece.b1.x = currentPiece.b2.x;
 				currentPiece.b1.y = currentPiece.b2.y;
 				currentPiece.b2.x -= (int)delta.Real;
@@ -59,13 +61,8 @@ namespace PuzzleFighter {
 			}
 		}
 
-		public bool checkValid(int x1, int y1, int x2, int y2) {
-			return (x1 >= 0 && x1 < xSize &&
-					y1 >= 0 && y1 < ySize &&
-					x2 >= 0 && x2 < xSize &&
-					y2 >= 0 && y2 < ySize &&
-					grid[x1, y1] == null &&
-					grid[x2, y2] == null) ;
+		public bool checkValid(int x, int y) {
+			return (x >= 0 && x < xSize && y >= 0 && y < ySize) ;
 		}
 
 		public void lockPiece() {
@@ -97,23 +94,40 @@ namespace PuzzleFighter {
 			}
 			return changed;
 		}
-		
-		public void clearBlocks(Block b) {
-			/*
-			if (b == null) {
-				for (int i = 0; i < xSize; i++) {
-					for (int j = 0; j < ySize; j++) {
-						if (grid[i, j] != null && grid[i, j].type == BlockType.Clear) {
-							clearBlocks(grid[i, j]);
-						}
+
+		private ArrayList toRemove;
+		public void clearBlocks() {
+			toRemove = new ArrayList();
+			for (int i = 0; i < xSize; i++) {
+				for (int j = 0; j < ySize; j++) {
+					if (grid[i, j] != null && grid[i, j].type == BlockType.Clear) {
+						connected = new ArrayList();
+						clearConnected(grid[i, j]);
 					}
 				}
-			} else {
-				foreach (int[] v in Piece.directionVectors) {
-					;
+			}
+			foreach (Block b in toRemove) {
+				grid[b.x, b.y] = null;
+			}
+		}
+		private ArrayList connected;
+		public void clearConnected(Block b) {
+			connected.Add(b);
+			foreach (int[] v in Piece.directionVectors) {
+				if (checkValid(b.x + v[0], b.y + v[1]) &&
+					grid[b.x + v[0], b.y + v[1]] != null &&
+					grid[b.x + v[0], b.y + v[1]].color == b.color &&
+					(grid[b.x + v[0], b.y + v[1]].type == BlockType.Normal || grid[b.x + v[0], b.y + v[1]].type == BlockType.Clear) &&
+					!connected.Contains(grid[b.x + v[0], b.y + v[1]])) {
+					//connected.Add(grid[b.x + v[0], b.y + v[1]]);
+					clearConnected(grid[b.x + v[0], b.y + v[1]]);		
 				}
 			}
-			*/
+			if (connected.Count > 1) {
+				foreach (Block bl in connected) {
+					toRemove.Add(bl);
+				}
+			}
 		}
 
 		public void printGrid() {

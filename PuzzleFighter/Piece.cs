@@ -33,8 +33,5 @@ namespace PuzzleFighter {
 			b2.x += directionVectors[(int)d][0];
 			b2.y += directionVectors[(int)d][1];
 		}
-		public void rotate() {
-			// do things
-		}
 	}
 }
