@@ -9,14 +9,15 @@ namespace PuzzleFighter {
 		public Block b1 { get; set; }
 		public Block b2 { get; set; }
 		public enum Direction { Up, Down, Left, Right }
-		public static int[,] directionVectors = new int[4, 2] { { 0, -1 }, { 0, 1 }, { -1, 0 }, { 1, 0 } };
+		public enum rotateDirection { CW, CCW }
+		public static int[][] directionVectors = new int[4][] { new int[2] { 0, -1 }, new int[2] { 0, 1 }, new int[2] { -1, 0 }, new int[2] { 1, 0 } };
 		public Piece(Block b1, Block b2) {
 			this.b1 = b1;
 			this.b2 = b2;
 		}
-		public Piece() {
-			this.b1 = new Block(3, 0);
-			this.b2 = new Block(3, 1);
+		public Piece(int x1, int y1, int x2, int y2) {
+			this.b1 = new Block(x1, y1);
+			this.b2 = new Block(x2, y2);
 		}
 		public Piece(int xSize, int ySize) {
 			this.b1 = new Block(xSize / 2, 0);
@@ -27,10 +28,10 @@ namespace PuzzleFighter {
 				"block 2: " + b2.x + ", " + b2.y + ", " + b2.color + ", " + b2.type;
 		}
 		public void move(Direction d) {
-			b1.x += directionVectors[(int)d, 0];
-			b1.y += directionVectors[(int)d, 1];
-			b2.x += directionVectors[(int)d, 0];
-			b2.y += directionVectors[(int)d, 1];
+			b1.x += directionVectors[(int)d][0];
+			b1.y += directionVectors[(int)d][1];
+			b2.x += directionVectors[(int)d][0];
+			b2.y += directionVectors[(int)d][1];
 		}
 		public void rotate() {
 			// do things

@@ -57,6 +57,12 @@ namespace PuzzleFighter {
 				case 'w':
 					b.lockPiece();
 					break;
+				case 'j':
+					b.rotateCurrent(Piece.rotateDirection.CW);
+					break;
+				case 'k':
+					b.rotateCurrent(Piece.rotateDirection.CCW);
+					break;
 			}
 			draw();
 		}
