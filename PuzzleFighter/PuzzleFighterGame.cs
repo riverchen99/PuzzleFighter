@@ -86,14 +86,16 @@ namespace PuzzleFighter {
 					Pen p = new Pen(Color.White, 1);
 					for (int i = 0; i < xSize; i++) {
 						for (int j = 0; j < ySize; j++) {
-							g.DrawRectangle(p, new Rectangle(gridSize * i, gridSize * j, gridSize, gridSize));
+							g.DrawRectangle(p, gridSize * i, gridSize * j, gridSize, gridSize);
 							if (b.grid[i, j] != null) {
 								renderBlock(g, b.grid[i, j]);
 							}
 						}
 					}
+					p.Dispose();
 					renderBlock(g, b.currentPiece.b1);
 					renderBlock(g, b.currentPiece.b2);
+					drawNextPiece(g, b);
 				}
 				Invalidate();
 			}
@@ -101,11 +103,25 @@ namespace PuzzleFighter {
 		void renderBlock(Graphics g, Block b) {
 			SolidBrush brush = new SolidBrush(Color.FromName(b.color.ToString()));
 			if (b.type == BlockType.Normal) {
-				g.FillRectangle(brush, new Rectangle(gridSize * b.x, gridSize * b.y, gridSize, gridSize));
+				g.FillRectangle(brush, gridSize * b.x, gridSize * b.y, gridSize, gridSize);
 			} else if (b.type == BlockType.Clear) {
-				g.FillEllipse(brush, new Rectangle(gridSize * b.x, gridSize * b.y, gridSize, gridSize));
+				g.FillEllipse(brush, gridSize * b.x, gridSize * b.y, gridSize, gridSize);
 			}
 			brush.Dispose();
+		}
+		void drawNextPiece(Graphics g, Board b) {
+			SolidBrush brush = new SolidBrush(Color.FromName(b.nextPiece.b1.color.ToString()));
+			if (b.nextPiece.b1.type == BlockType.Normal) {
+				g.FillRectangle(brush, gridSize*7, gridSize, gridSize, gridSize);
+			} else if (b.nextPiece.b1.type == BlockType.Clear) {
+				g.FillEllipse(brush, gridSize*7, gridSize, gridSize, gridSize);
+			}
+			brush = new SolidBrush(Color.FromName(b.nextPiece.b2.color.ToString()));
+			if (b.nextPiece.b2.type == BlockType.Normal) {
+				g.FillRectangle(brush, gridSize * 7, gridSize*2, gridSize, gridSize);
+			} else if (b.nextPiece.b2.type == BlockType.Clear) {
+				g.FillEllipse(brush, gridSize * 7, gridSize*2, gridSize, gridSize);
+			}
 		}
 	}
 }

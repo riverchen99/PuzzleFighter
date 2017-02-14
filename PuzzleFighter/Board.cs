@@ -10,6 +10,7 @@ namespace PuzzleFighter {
 	public class Board {
 		public Block[,] grid { get; set; }
 		public Piece currentPiece { get; set; }
+		public Piece nextPiece { get; set; }
 		public int xSize { get; set; }
 		public int ySize { get; set; }
 		
@@ -18,6 +19,7 @@ namespace PuzzleFighter {
 			this.ySize = ySize;
 			grid = new Block[xSize, ySize];
 			currentPiece = new Piece(xSize, ySize);
+			nextPiece = new Piece(xSize, ySize);
 		}
 
 		public void update() {
@@ -32,8 +34,7 @@ namespace PuzzleFighter {
 			if (checkValid(currentPiece.b1.x + Piece.directionVectors[(int)d][0], currentPiece.b1.y + Piece.directionVectors[(int)d][1]) &&
 				checkValid(currentPiece.b2.x + Piece.directionVectors[(int)d][0], currentPiece.b2.y + Piece.directionVectors[(int)d][1]) &&
 				grid[currentPiece.b1.x + Piece.directionVectors[(int)d][0], currentPiece.b1.y + Piece.directionVectors[(int)d][1]] == null &&
-				grid[currentPiece.b2.x + Piece.directionVectors[(int)d][0], currentPiece.b2.y + Piece.directionVectors[(int)d][1]] == null)
-				 {
+				grid[currentPiece.b2.x + Piece.directionVectors[(int)d][0], currentPiece.b2.y + Piece.directionVectors[(int)d][1]] == null) {
 				currentPiece.move(d);
 			} else if (d == Piece.Direction.Down) {
 				lockPiece();
@@ -70,7 +71,8 @@ namespace PuzzleFighter {
 			grid[currentPiece.b2.x, currentPiece.b2.y] = currentPiece.b2;
 			update();
 			if (grid[xSize/2, 0] == null && grid[xSize/2, 1] ==  null) {
-				currentPiece = new Piece(xSize, ySize);
+				currentPiece = nextPiece; 
+				nextPiece = new Piece(xSize, ySize);
 			} else {
 				// game over; 
 			}
@@ -96,6 +98,8 @@ namespace PuzzleFighter {
 		}
 
 		private ArrayList toRemove;
+		private ArrayList connected;
+
 		public void clearBlocks() {
 			toRemove = new ArrayList();
 			for (int i = 0; i < xSize; i++) {
@@ -110,7 +114,7 @@ namespace PuzzleFighter {
 				grid[b.x, b.y] = null;
 			}
 		}
-		private ArrayList connected;
+		
 		public void clearConnected(Block b) {
 			connected.Add(b);
 			foreach (int[] v in Piece.directionVectors) {
@@ -119,7 +123,6 @@ namespace PuzzleFighter {
 					grid[b.x + v[0], b.y + v[1]].color == b.color &&
 					(grid[b.x + v[0], b.y + v[1]].type == BlockType.Normal || grid[b.x + v[0], b.y + v[1]].type == BlockType.Clear) &&
 					!connected.Contains(grid[b.x + v[0], b.y + v[1]])) {
-					//connected.Add(grid[b.x + v[0], b.y + v[1]]);
 					clearConnected(grid[b.x + v[0], b.y + v[1]]);		
 				}
 			}
