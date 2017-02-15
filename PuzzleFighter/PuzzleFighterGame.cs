@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace PuzzleFighter {
-    public partial class PuzzleFighterGame : Form {
+	public partial class PuzzleFighterGame : Form {
 		Board b;
 		int xSize = 6;
 		int ySize = 15;
@@ -18,7 +18,7 @@ namespace PuzzleFighter {
 		Timer GameTimer = new Timer();
 
 		public PuzzleFighterGame() {
-            InitializeComponent();
+			InitializeComponent();
 
 			this.SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.DoubleBuffer, true);
 
@@ -33,7 +33,7 @@ namespace PuzzleFighter {
 			GameTimer.Start();
 
 			b = new Board(xSize, ySize);
-        }
+		}
 
 		void GameTimer_Tick(object sender, EventArgs e) {
 			// handle logic
@@ -112,15 +112,15 @@ namespace PuzzleFighter {
 		void drawNextPiece(Graphics g, Board b) {
 			SolidBrush brush = new SolidBrush(Color.FromName(b.nextPiece.b1.color.ToString()));
 			if (b.nextPiece.b1.type == BlockType.Normal) {
-				g.FillRectangle(brush, gridSize*(xSize+1), gridSize, gridSize, gridSize);
+				g.FillRectangle(brush, gridSize * (xSize + 1), gridSize, gridSize, gridSize);
 			} else if (b.nextPiece.b1.type == BlockType.Clear) {
-				g.FillEllipse(brush, gridSize* (xSize + 1), gridSize, gridSize, gridSize);
+				g.FillEllipse(brush, gridSize * (xSize + 1), gridSize, gridSize, gridSize);
 			}
 			brush = new SolidBrush(Color.FromName(b.nextPiece.b2.color.ToString()));
 			if (b.nextPiece.b2.type == BlockType.Normal) {
-				g.FillRectangle(brush, gridSize * (xSize + 1), gridSize*2, gridSize, gridSize);
+				g.FillRectangle(brush, gridSize * (xSize + 1), gridSize * 2, gridSize, gridSize);
 			} else if (b.nextPiece.b2.type == BlockType.Clear) {
-				g.FillEllipse(brush, gridSize * (xSize + 1), gridSize*2, gridSize, gridSize);
+				g.FillEllipse(brush, gridSize * (xSize + 1), gridSize * 2, gridSize, gridSize);
 			}
 		}
 	}

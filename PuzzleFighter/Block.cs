@@ -27,7 +27,7 @@ namespace PuzzleFighter {
 			this.x = x;
 			this.y = y;
 			this.color = (BlockColor)colorValues.GetValue(random.Next(colorValues.Length));
-			this.type = random.NextDouble() < .8 ? BlockType.Normal : BlockType.Clear;
+			this.type = random.NextDouble() < .75 ? BlockType.Normal : BlockType.Clear;
 			this.unlockTime = -1;
 		}
 	}

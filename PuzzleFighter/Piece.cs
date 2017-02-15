@@ -24,7 +24,7 @@ namespace PuzzleFighter {
 			this.b2 = new Block(xSize / 2, 1);
 		}
 		public override String ToString() {
-			return "block 1: " + b1.x + ", " + b1.y + ", " + b1.color + ", " + b1.type + "\n" + 
+			return "block 1: " + b1.x + ", " + b1.y + ", " + b1.color + ", " + b1.type + "\n" +
 				"block 2: " + b2.x + ", " + b2.y + ", " + b2.color + ", " + b2.type;
 		}
 		public void move(Direction d) {

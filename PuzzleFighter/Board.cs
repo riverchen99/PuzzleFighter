@@ -53,19 +53,26 @@ namespace PuzzleFighter {
 				grid[currentPiece.b1.x, currentPiece.b1.y] == null) {
 				currentPiece.b1.x = currentPiece.b2.x + (int)delta.Real;
 				currentPiece.b1.y = currentPiece.b2.y + (int)delta.Imaginary;
-			} else if (	checkValid(currentPiece.b2.x - (int)delta.Real, currentPiece.b2.y - (int)delta.Imaginary) &&
+			} else if (checkValid(currentPiece.b2.x - (int)delta.Real, currentPiece.b2.y - (int)delta.Imaginary) &&
 						checkValid(currentPiece.b1.x, currentPiece.b1.y) &&
-						grid[currentPiece.b2.x - (int)delta.Real, currentPiece.b2.y - (int)delta.Imaginary]== null &&
+						grid[currentPiece.b2.x - (int)delta.Real, currentPiece.b2.y - (int)delta.Imaginary] == null &&
 						grid[currentPiece.b2.x - (int)delta.Real, currentPiece.b2.y - (int)delta.Imaginary] == null) {
 				currentPiece.b1.x = currentPiece.b2.x;
 				currentPiece.b1.y = currentPiece.b2.y;
 				currentPiece.b2.x -= (int)delta.Real;
 				currentPiece.b2.y -= (int)delta.Imaginary;
+			} else {
+				int tx = currentPiece.b2.x;
+				int ty = currentPiece.b2.y;
+				currentPiece.b2.x = currentPiece.b1.x;
+				currentPiece.b2.y = currentPiece.b1.y;
+				currentPiece.b1.x = tx;
+				currentPiece.b1.y = ty;
 			}
 		}
 
 		public bool checkValid(int x, int y) {
-			return (x >= 0 && x < xSize && y >= 0 && y < ySize) ;
+			return (x >= 0 && x < xSize && y >= 0 && y < ySize);
 		}
 
 		public void lockPiece() {
@@ -73,8 +80,8 @@ namespace PuzzleFighter {
 			grid[currentPiece.b2.x, currentPiece.b2.y] = currentPiece.b2;
 			dropBlocks();
 			update();
-			if (grid[xSize/2, 0] == null && grid[xSize/2, 1] ==  null) {
-				currentPiece = nextPiece; 
+			if (grid[xSize / 2, 0] == null && grid[xSize / 2, 1] == null) {
+				currentPiece = nextPiece;
 				nextPiece = new Piece(xSize, ySize);
 			} else {
 				// game over; 
@@ -84,10 +91,10 @@ namespace PuzzleFighter {
 		public bool dropBlocks() {
 			bool changed = false;
 			for (int i = 0; i < xSize; i++) {
-				for (int j = ySize-2; j >= 0; j--) {
+				for (int j = ySize - 2; j >= 0; j--) {
 					if (grid[i, j] != null) {
 						int k = 0;
-						while (j+k < ySize-1 && grid[i, j + k + 1] == null) { k++; }
+						while (j + k < ySize - 1 && grid[i, j + k + 1] == null) { k++; }
 						if (k > 0) {
 							grid[i, j].y = j + k;
 							grid[i, j + k] = grid[i, j];
@@ -123,7 +130,7 @@ namespace PuzzleFighter {
 				score++;
 			}
 		}
-		
+
 		public void clearConnected(Block b) {
 			connected.Add(b);
 			foreach (int[] v in Piece.directionVectors) {
@@ -132,7 +139,7 @@ namespace PuzzleFighter {
 					grid[b.x + v[0], b.y + v[1]].color == b.color &&
 					(grid[b.x + v[0], b.y + v[1]].type == BlockType.Normal || grid[b.x + v[0], b.y + v[1]].type == BlockType.Clear) &&
 					!connected.Contains(grid[b.x + v[0], b.y + v[1]])) {
-					clearConnected(grid[b.x + v[0], b.y + v[1]]);		
+					clearConnected(grid[b.x + v[0], b.y + v[1]]);
 				}
 			}
 		}
