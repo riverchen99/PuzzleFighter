@@ -122,6 +122,17 @@ namespace PuzzleFighter {
 								toRemove.Add(bl);
 							}
 						}
+					} else if (grid[i, j] != null && grid[i, j].type == BlockType.Diamond) {
+						toRemove.Add(grid[i, j]);
+						if (checkValid(i, j + 1) && grid[i, j + 1] != null) {
+							for (int a = 0; a < xSize; a++) {
+								for (int b = 0; b < ySize; b++) {
+									if (grid[a, b] != null && grid[a, b].color == grid[i, j + 1].color && !toRemove.Contains(grid[a, b])) {
+										toRemove.Add(grid[a, b]);
+									}
+								}
+							}
+						}
 					}
 				}
 			}

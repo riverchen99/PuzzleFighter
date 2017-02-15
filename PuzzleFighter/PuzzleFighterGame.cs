@@ -106,6 +106,9 @@ namespace PuzzleFighter {
 				g.FillRectangle(brush, gridSize * b.x, gridSize * b.y, gridSize, gridSize);
 			} else if (b.type == BlockType.Clear) {
 				g.FillEllipse(brush, gridSize * b.x, gridSize * b.y, gridSize, gridSize);
+			} else if (b.type == BlockType.Diamond) {
+				brush.Color = Color.White;
+				g.FillPie(brush, gridSize * b.x, gridSize * b.y, gridSize, gridSize, -60, -60);
 			}
 			brush.Dispose();
 		}
@@ -115,12 +118,18 @@ namespace PuzzleFighter {
 				g.FillRectangle(brush, gridSize * (xSize + 1), gridSize, gridSize, gridSize);
 			} else if (b.nextPiece.b1.type == BlockType.Clear) {
 				g.FillEllipse(brush, gridSize * (xSize + 1), gridSize, gridSize, gridSize);
+			} else if (b.nextPiece.b1.type == BlockType.Diamond) {
+				brush.Color = Color.White;
+				g.FillPie(brush, gridSize * (xSize + 1), gridSize, gridSize, gridSize, -60, -60);
 			}
 			brush = new SolidBrush(Color.FromName(b.nextPiece.b2.color.ToString()));
 			if (b.nextPiece.b2.type == BlockType.Normal) {
 				g.FillRectangle(brush, gridSize * (xSize + 1), gridSize * 2, gridSize, gridSize);
 			} else if (b.nextPiece.b2.type == BlockType.Clear) {
 				g.FillEllipse(brush, gridSize * (xSize + 1), gridSize * 2, gridSize, gridSize);
+			} else if (b.nextPiece.b2.type == BlockType.Diamond) {
+				brush.Color = Color.White;
+				g.FillPie(brush, gridSize * (xSize + 1), gridSize * 2, gridSize, gridSize, -60, -60);
 			}
 		}
 	}
