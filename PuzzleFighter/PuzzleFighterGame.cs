@@ -28,7 +28,7 @@ namespace PuzzleFighter {
 			this.Load += new EventHandler(PuzzleFighterGame_CreateBackBuffer);
 			this.Paint += new PaintEventHandler(PuzzleFighterGame_Paint);
 
-			GameTimer.Interval = 1000; // ms
+			GameTimer.Interval = 250; // ms
 			GameTimer.Tick += new EventHandler(GameTimer_Tick);
 			GameTimer.Start();
 
@@ -43,7 +43,6 @@ namespace PuzzleFighter {
 
 		//input
 		void PuzzleFighterGame_KeyPress(object sender, KeyPressEventArgs e) {
-			Console.WriteLine(e.KeyChar);
 			switch (e.KeyChar) {
 				case 'a':
 					b.moveCurrent(Piece.Direction.Left);
@@ -96,6 +95,7 @@ namespace PuzzleFighter {
 					renderBlock(g, b.currentPiece.b1);
 					renderBlock(g, b.currentPiece.b2);
 					drawNextPiece(g, b);
+					g.DrawString(b.score.ToString(), new Font("Comic Sans", 16), new SolidBrush(Color.White), gridSize * (xSize + 1), gridSize * 3);
 				}
 				Invalidate();
 			}
@@ -112,15 +112,15 @@ namespace PuzzleFighter {
 		void drawNextPiece(Graphics g, Board b) {
 			SolidBrush brush = new SolidBrush(Color.FromName(b.nextPiece.b1.color.ToString()));
 			if (b.nextPiece.b1.type == BlockType.Normal) {
-				g.FillRectangle(brush, gridSize*7, gridSize, gridSize, gridSize);
+				g.FillRectangle(brush, gridSize*(xSize+1), gridSize, gridSize, gridSize);
 			} else if (b.nextPiece.b1.type == BlockType.Clear) {
-				g.FillEllipse(brush, gridSize*7, gridSize, gridSize, gridSize);
+				g.FillEllipse(brush, gridSize* (xSize + 1), gridSize, gridSize, gridSize);
 			}
 			brush = new SolidBrush(Color.FromName(b.nextPiece.b2.color.ToString()));
 			if (b.nextPiece.b2.type == BlockType.Normal) {
-				g.FillRectangle(brush, gridSize * 7, gridSize*2, gridSize, gridSize);
+				g.FillRectangle(brush, gridSize * (xSize + 1), gridSize*2, gridSize, gridSize);
 			} else if (b.nextPiece.b2.type == BlockType.Clear) {
-				g.FillEllipse(brush, gridSize * 7, gridSize*2, gridSize, gridSize);
+				g.FillEllipse(brush, gridSize * (xSize + 1), gridSize*2, gridSize, gridSize);
 			}
 		}
 	}

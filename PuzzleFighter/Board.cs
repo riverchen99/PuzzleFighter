@@ -13,20 +13,22 @@ namespace PuzzleFighter {
 		public Piece nextPiece { get; set; }
 		public int xSize { get; set; }
 		public int ySize { get; set; }
-		
+		public int score { get; set; }
+
 		public Board(int xSize, int ySize) { // x: 0 -> 5, y: 0 - 14 (two hidden)
 			this.xSize = xSize;
 			this.ySize = ySize;
 			grid = new Block[xSize, ySize];
 			currentPiece = new Piece(xSize, ySize);
 			nextPiece = new Piece(xSize, ySize);
+			score = 0;
 		}
 
 		public void update() {
 			bool changed;
 			do {
-				changed = dropBlocks();
 				clearBlocks();
+				changed = dropBlocks();
 			} while (changed);
 		}
 
@@ -69,6 +71,7 @@ namespace PuzzleFighter {
 		public void lockPiece() {
 			grid[currentPiece.b1.x, currentPiece.b1.y] = currentPiece.b1;
 			grid[currentPiece.b2.x, currentPiece.b2.y] = currentPiece.b2;
+			dropBlocks();
 			update();
 			if (grid[xSize/2, 0] == null && grid[xSize/2, 1] ==  null) {
 				currentPiece = nextPiece; 
@@ -104,14 +107,20 @@ namespace PuzzleFighter {
 			toRemove = new ArrayList();
 			for (int i = 0; i < xSize; i++) {
 				for (int j = 0; j < ySize; j++) {
-					if (grid[i, j] != null && grid[i, j].type == BlockType.Clear) {
+					if (grid[i, j] != null && grid[i, j].type == BlockType.Clear && !toRemove.Contains(grid[i, j])) {
 						connected = new ArrayList();
 						clearConnected(grid[i, j]);
+						if (connected.Count > 1) {
+							foreach (Block bl in connected) {
+								toRemove.Add(bl);
+							}
+						}
 					}
 				}
 			}
 			foreach (Block b in toRemove) {
 				grid[b.x, b.y] = null;
+				score++;
 			}
 		}
 		
@@ -124,11 +133,6 @@ namespace PuzzleFighter {
 					(grid[b.x + v[0], b.y + v[1]].type == BlockType.Normal || grid[b.x + v[0], b.y + v[1]].type == BlockType.Clear) &&
 					!connected.Contains(grid[b.x + v[0], b.y + v[1]])) {
 					clearConnected(grid[b.x + v[0], b.y + v[1]]);		
-				}
-			}
-			if (connected.Count > 1) {
-				foreach (Block bl in connected) {
-					toRemove.Add(bl);
 				}
 			}
 		}
