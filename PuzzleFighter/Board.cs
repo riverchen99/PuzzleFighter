@@ -22,11 +22,13 @@ namespace PuzzleFighter {
 			currentPiece = new Piece(xSize, ySize);
 			nextPiece = new Piece(xSize, ySize);
 			score = 0;
+			rectangles = new ArrayList();
 		}
 
 		public void update() {
 			bool changed;
 			do {
+				detect2x2();
 				clearBlocks();
 				changed = dropBlocks();
 			} while (changed);
@@ -161,6 +163,24 @@ namespace PuzzleFighter {
 					Console.Write(grid[i, j] == null ? 0 : 1);
 				}
 				Console.WriteLine();
+			}
+		}
+
+		private ArrayList rectangles;
+		public void detect2x2() {
+			for (int i = 0; i < xSize - 1; i++) {
+				for (int j = ySize - 1; j > 0; j--) {
+					if (grid[i, j] != null &&
+						grid[i + 1, j] != null &&
+						grid[i, j - 1] != null &&
+						grid[i + 1, j - 1] != null &&
+						grid[i, j].color == grid[i + 1, j].color &&
+						grid[i, j].color == grid[i, j - 1].color &&
+						grid[i, j].color == grid[i + 1, j - 1].color) {
+						rectangles.Add(new PowerGem(i, j));
+						Console.WriteLine(i + " " + j);
+					}
+				}
 			}
 		}
 	}

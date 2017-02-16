@@ -49,6 +49,7 @@
   <ItemGroup>
     <Compile Include="Block.cs" />
     <Compile Include="Board.cs" />
+    <Compile Include="PowerGem.cs" />
     <Compile Include="PuzzleFighterGame.cs">
       <SubType>Form</SubType>
     </Compile>

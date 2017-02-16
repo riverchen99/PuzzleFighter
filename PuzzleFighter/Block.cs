@@ -13,6 +13,7 @@ namespace PuzzleFighter {
 		public BlockColor color { get; set; }
 		public BlockType type { get; set; }
 		public int unlockTime { get; set; }
+		public bool inPowerGem { get; set;  }
 		Array colorValues = Enum.GetValues(typeof(BlockColor));
 		Array typeValues = Enum.GetValues(typeof(BlockType));
 		public static readonly Random random = new Random();
@@ -22,6 +23,7 @@ namespace PuzzleFighter {
 			this.color = color;
 			this.type = type;
 			this.unlockTime = unlockTime;
+			this.inPowerGem = false;
 		}
 		public Block(int x, int y) {
 			this.x = x;
@@ -29,6 +31,7 @@ namespace PuzzleFighter {
 			this.color = (BlockColor)colorValues.GetValue(random.Next(colorValues.Length));
 			this.type = random.NextDouble() < .75 ? BlockType.Normal : (random.NextDouble() < .75 ? BlockType.Clear : BlockType.Diamond);
 			this.unlockTime = -1;
+			this.inPowerGem = false;
 		}
 	}
 }
