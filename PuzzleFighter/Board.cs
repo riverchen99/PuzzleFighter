@@ -22,13 +22,14 @@ namespace PuzzleFighter {
 			currentPiece = new Piece(xSize, ySize);
 			nextPiece = new Piece(xSize, ySize);
 			score = 0;
-			rectangles = new ArrayList();
+			powerGems = new HashSet<PowerGem>(new PowerGemEqualityComparer());
 		}
 
 		public void update() {
 			bool changed;
 			do {
 				detect2x2();
+				expandPowerGems();
 				clearBlocks();
 				changed = dropBlocks();
 			} while (changed);
@@ -126,7 +127,7 @@ namespace PuzzleFighter {
 						}
 					} else if (grid[i, j] != null && grid[i, j].type == BlockType.Diamond) {
 						toRemove.Add(grid[i, j]);
-						if (checkValid(i, j + 1) && grid[i, j + 1] != null) {
+						if (checkValid(i, j + 1) && grid[i, j + 1] != null && grid[i, j + 1].type != BlockType.Diamond) {
 							for (int a = 0; a < xSize; a++) {
 								for (int b = 0; b < ySize; b++) {
 									if (grid[a, b] != null && grid[a, b].color == grid[i, j + 1].color && !toRemove.Contains(grid[a, b])) {
@@ -166,7 +167,7 @@ namespace PuzzleFighter {
 			}
 		}
 
-		private ArrayList rectangles;
+		public HashSet<PowerGem> powerGems;
 		public void detect2x2() {
 			for (int i = 0; i < xSize - 1; i++) {
 				for (int j = ySize - 1; j > 0; j--) {
@@ -176,10 +177,62 @@ namespace PuzzleFighter {
 						grid[i + 1, j - 1] != null &&
 						grid[i, j].color == grid[i + 1, j].color &&
 						grid[i, j].color == grid[i, j - 1].color &&
-						grid[i, j].color == grid[i + 1, j - 1].color) {
-						rectangles.Add(new PowerGem(i, j));
-						Console.WriteLine(i + " " + j);
+						grid[i, j].color == grid[i + 1, j - 1].color &&
+						!grid[i + 1, j].inPowerGem &&
+						!grid[i, j - 1].inPowerGem &&
+						!grid[i + 1, j - 1].inPowerGem) {
+						if (powerGems.Add(new PowerGem(i, j, grid[i, j].color))) {
+							grid[i, j].inPowerGem = true;
+							grid[i + 1, j].inPowerGem = true;
+							grid[i, j - 1].inPowerGem = true;
+							grid[i + 1, j - 1].inPowerGem = true;
+							Console.WriteLine(i + " " + j);
+						}
 					}
+				}
+			}
+		}
+
+		public void expandPowerGems() {
+			foreach (PowerGem p in powerGems) {
+				Boolean expandUp = true;
+				for (int i = 0; i < p.width; i++) {
+					if (!checkValid(p.x + i, p.y - p.height) || grid[p.x + i, p.y - p.height] == null || grid[p.x + i, p.y - p.height].color != p.color) {
+						expandUp = false;
+					}
+				}
+				if (expandUp) {
+					for (int i = 0; i < p.width; i++) {
+						grid[p.x + i, p.y - p.height].inPowerGem = true;
+					}
+					p.height++;
+					Console.WriteLine("expanded up!!");
+				}
+
+				Boolean expandRight = true;
+				Boolean expandLeft = true;
+				for (int i = 0; i < p.height; i++) {
+					if (!checkValid(p.x + p.width, p.y - i) || grid[p.x + p.width, p.y - i]  == null || grid[p.x + p.width, p.y - i].color != p.color) {
+						expandRight = false;
+					}
+					if (!checkValid(p.x - 1, p.y - i) || grid[p.x - 1, p.y - i] == null || grid[p.x - 1, p.y - i].color != p.color) {
+						expandLeft = false;
+					}
+				}
+				if (expandRight) {
+					for (int i = 0; i < p.height; i++) {
+						grid[p.x + p.width, p.y - i].inPowerGem = true;
+					}
+					p.width++;
+					Console.WriteLine("expanded right!!");
+				}
+				if (expandLeft) {
+					for (int i = 0; i < p.height; i++) {
+						grid[p.x - 1, p.y - i].inPowerGem = true;
+					}
+					p.x--;
+					p.width++;
+					Console.WriteLine("expanded left!!");
 				}
 			}
 		}

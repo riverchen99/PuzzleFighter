@@ -87,20 +87,21 @@ namespace PuzzleFighter {
 						for (int j = 0; j < ySize; j++) {
 							g.DrawRectangle(p, gridSize * i, gridSize * j, gridSize, gridSize);
 							if (b.grid[i, j] != null) {
-								renderBlock(g, b.grid[i, j]);
+								drawBlock(g, b.grid[i, j]);
 							}
 						}
 					}
 					p.Dispose();
-					renderBlock(g, b.currentPiece.b1);
-					renderBlock(g, b.currentPiece.b2);
+					drawBlock(g, b.currentPiece.b1);
+					drawBlock(g, b.currentPiece.b2);
 					drawNextPiece(g, b);
+					drawPowerGems(g, b);
 					g.DrawString(b.score.ToString(), new Font("Comic Sans", 16), new SolidBrush(Color.White), gridSize * (xSize + 1), gridSize * 3);
 				}
 				Invalidate();
 			}
 		}
-		void renderBlock(Graphics g, Block b) {
+		void drawBlock(Graphics g, Block b) {
 			SolidBrush brush = new SolidBrush(Color.FromName(b.color.ToString()));
 			if (b.type == BlockType.Normal) {
 				g.FillRectangle(brush, gridSize * b.x, gridSize * b.y, gridSize, gridSize);
@@ -130,6 +131,12 @@ namespace PuzzleFighter {
 			} else if (b.nextPiece.b2.type == BlockType.Diamond) {
 				brush.Color = Color.White;
 				g.FillPie(brush, gridSize * (xSize + 1), gridSize * 2, gridSize, gridSize, -60, -60);
+			}
+		}
+		void drawPowerGems(Graphics g, Board b) {
+			Pen pen = new Pen(Color.Turquoise, 3);
+			foreach (PowerGem p in b.powerGems) {
+				g.DrawRectangle(pen, gridSize * p.x, gridSize * p.y - gridSize * (p.height-1), gridSize * p.width, gridSize * p.height);
 			}
 		}
 	}
