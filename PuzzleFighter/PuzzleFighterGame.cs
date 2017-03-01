@@ -42,6 +42,8 @@ namespace PuzzleFighter {
 		}
 
 		//input
+		int colorIndex = 0;
+		int typeIndex = 0;
 		void PuzzleFighterGame_KeyPress(object sender, KeyPressEventArgs e) {
 			switch (e.KeyChar) {
 				case 'a':
@@ -61,6 +63,24 @@ namespace PuzzleFighter {
 					break;
 				case 'k':
 					b.rotateCurrent(Piece.rotateDirection.CCW);
+					break;
+				case 'r':
+					b.currentPiece.b1.color = BlockColor.Red;
+					b.currentPiece.b1.type = BlockType.Normal;
+					b.currentPiece.b2.color = BlockColor.Red;
+					b.currentPiece.b2.type = BlockType.Normal;
+					break;
+				case '1':
+					b.currentPiece.b1.color = (BlockColor) Block.colorValues.GetValue(colorIndex++ % 4);
+					break;
+				case '2':
+					b.currentPiece.b2.color = (BlockColor)Block.colorValues.GetValue(colorIndex++ % 4);
+					break;
+				case '3':
+					b.currentPiece.b1.type = (BlockType)Block.typeValues.GetValue(typeIndex++ % 4);
+					break;
+				case '4':
+					b.currentPiece.b2.type = (BlockType)Block.typeValues.GetValue(typeIndex++ % 4);
 					break;
 			}
 			draw();
@@ -82,24 +102,27 @@ namespace PuzzleFighter {
 			if (Backbuffer != null) {
 				using (var g = Graphics.FromImage(Backbuffer)) {
 					g.Clear(Color.Black);
-					Pen p = new Pen(Color.White, 1);
-					for (int i = 0; i < xSize; i++) {
-						for (int j = 0; j < ySize; j++) {
-							g.DrawRectangle(p, gridSize * i, gridSize * j, gridSize, gridSize);
-							if (b.grid[i, j] != null) {
-								drawBlock(g, b.grid[i, j]);
-							}
-						}
-					}
-					p.Dispose();
+					drawGrid(g);
 					drawBlock(g, b.currentPiece.b1);
 					drawBlock(g, b.currentPiece.b2);
-					drawNextPiece(g, b);
-					drawPowerGems(g, b);
-					g.DrawString(b.score.ToString(), new Font("Comic Sans", 16), new SolidBrush(Color.White), gridSize * (xSize + 1), gridSize * 3);
+					drawNextPiece(g);
+					drawPowerGems(g);
+					drawText(g);
 				}
 				Invalidate();
 			}
+		}
+		void drawGrid(Graphics g) {
+			Pen p = new Pen(Color.White, 1);
+			for (int i = 0; i < xSize; i++) {
+				for (int j = 0; j < ySize; j++) {
+					g.DrawRectangle(p, gridSize * i, gridSize * j, gridSize, gridSize);
+					if (b.grid[i, j] != null) {
+						drawBlock(g, b.grid[i, j]);
+					}
+				}
+			}
+			p.Dispose();
 		}
 		void drawBlock(Graphics g, Block b) {
 			SolidBrush brush = new SolidBrush(Color.FromName(b.color.ToString()));
@@ -113,7 +136,7 @@ namespace PuzzleFighter {
 			}
 			brush.Dispose();
 		}
-		void drawNextPiece(Graphics g, Board b) {
+		void drawNextPiece(Graphics g) {
 			SolidBrush brush = new SolidBrush(Color.FromName(b.nextPiece.b1.color.ToString()));
 			if (b.nextPiece.b1.type == BlockType.Normal) {
 				g.FillRectangle(brush, gridSize * (xSize + 1), gridSize, gridSize, gridSize);
@@ -133,10 +156,19 @@ namespace PuzzleFighter {
 				g.FillPie(brush, gridSize * (xSize + 1), gridSize * 2, gridSize, gridSize, -60, -60);
 			}
 		}
-		void drawPowerGems(Graphics g, Board b) {
+		void drawPowerGems(Graphics g) {
 			Pen pen = new Pen(Color.Tomato, 3);
 			foreach (PowerGem p in b.powerGems) {
-				g.DrawRectangle(pen, gridSize * p.x, gridSize * p.y - gridSize * (p.height-1), gridSize * p.width, gridSize * p.height);
+				g.DrawRectangle(pen, gridSize * p.x, gridSize * p.y - gridSize * (p.height - 1), gridSize * p.width, gridSize * p.height);
+			}
+		}
+		void drawText(Graphics g) {
+			g.DrawString(b.score.ToString(), new Font("Comic Sans", 16), new SolidBrush(Color.White), gridSize * (xSize + 1), gridSize * 3);
+			for (int i = 0; i < xSize; i++) {
+				g.DrawString(i.ToString(), new Font("Comic Sans", 16), new SolidBrush(Color.White), i * gridSize, ySize * gridSize);
+			}
+			for (int i = 0; i < ySize; i++) {
+				g.DrawString(i.ToString(), new Font("Comic Sans", 16), new SolidBrush(Color.White), xSize * gridSize, i * gridSize);
 			}
 		}
 	}

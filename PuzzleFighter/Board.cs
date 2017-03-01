@@ -33,6 +33,7 @@ namespace PuzzleFighter {
 				conbinePowerGems();
 				clearBlocks();
 				dropBlocks();
+				dropPowerGems();
 			} while (changed);
 		}
 
@@ -95,7 +96,7 @@ namespace PuzzleFighter {
 		public bool dropBlocks() {
 			for (int i = 0; i < xSize; i++) {
 				for (int j = ySize - 2; j >= 0; j--) {
-					if (grid[i, j] != null) {
+					if (grid[i, j] != null && !grid[i, j].inPowerGem) {
 						int k = 0;
 						while (j + k < ySize - 1 && grid[i, j + k + 1] == null) { k++; }
 						if (k > 0) {
@@ -110,28 +111,52 @@ namespace PuzzleFighter {
 			return changed;
 		}
 
-		private ArrayList toRemove;
-		private ArrayList connected;
+		public bool dropPowerGems() {
+			foreach (PowerGem p in powerGems) {
+				int minFallHeight = Int32.MaxValue;
+				for (int i = p.x; i < p.x + p.width; i++) {
+					int k = 0;
+					while (p.y + k < ySize - 1 && grid[i, p.y + k + 1] == null) { k++; }
+					if (k < minFallHeight) {
+						minFallHeight = k;
+					}
+				}
+				if (minFallHeight > 0 && minFallHeight < Int32.MaxValue) {
+					for (int i = p.x; i < p.x + p.width; i++) {
+						for (int j = p.y; j > p.y - p.height; j--) {
+							grid[i, j].y = j + minFallHeight;
+							grid[i, j + minFallHeight] = grid[i, j];
+							grid[i, j] = null;
+							changed = true;
+						}
+					}
+					p.y = p.y + minFallHeight;
+				}
+
+			}
+			return changed;
+		}
 
 		public void clearBlocks() {
-			toRemove = new ArrayList();
+			List<Block> blocksToRemove = new List<Block>();
+			List<PowerGem> gemsToRemove = new List<PowerGem>();
 			for (int i = 0; i < xSize; i++) {
 				for (int j = 0; j < ySize; j++) {
-					if (grid[i, j] != null && grid[i, j].type == BlockType.Clear && !toRemove.Contains(grid[i, j])) {
-						connected = new ArrayList();
-						clearConnected(grid[i, j]);
+					if (grid[i, j] != null && grid[i, j].type == BlockType.Clear && !blocksToRemove.Contains(grid[i, j])) {
+						connected = new List<Block>();
+						getConnected(grid[i, j]);
 						if (connected.Count > 1) {
 							foreach (Block bl in connected) {
-								toRemove.Add(bl);
+								blocksToRemove.Add(bl);
 							}
 						}
 					} else if (grid[i, j] != null && grid[i, j].type == BlockType.Diamond) {
-						toRemove.Add(grid[i, j]);
+						blocksToRemove.Add(grid[i, j]);
 						if (checkValid(i, j + 1) && grid[i, j + 1] != null && grid[i, j + 1].type != BlockType.Diamond) {
 							for (int a = 0; a < xSize; a++) {
 								for (int b = 0; b < ySize; b++) {
-									if (grid[a, b] != null && grid[a, b].color == grid[i, j + 1].color && !toRemove.Contains(grid[a, b])) {
-										toRemove.Add(grid[a, b]);
+									if (grid[a, b] != null && grid[a, b].color == grid[i, j + 1].color && !blocksToRemove.Contains(grid[a, b])) {
+										blocksToRemove.Add(grid[a, b]);
 									}
 								}
 							}
@@ -139,13 +164,23 @@ namespace PuzzleFighter {
 					}
 				}
 			}
-			foreach (Block b in toRemove) {
+
+			foreach (Block b in blocksToRemove) {
+				foreach (PowerGem p in powerGems) {
+					if (b.x == p.x && b.y == p.y) {
+						gemsToRemove.Add(p);
+					}
+				}
 				grid[b.x, b.y] = null;
 				score++;
 			}
+			foreach (PowerGem p in gemsToRemove) {
+				powerGems.Remove(p);
+			}
 		}
 
-		public void clearConnected(Block b) {
+		private List<Block> connected;
+		public void getConnected(Block b) {
 			connected.Add(b);
 			foreach (int[] v in Piece.directionVectors) {
 				if (checkValid(b.x + v[0], b.y + v[1]) &&
@@ -153,7 +188,7 @@ namespace PuzzleFighter {
 					grid[b.x + v[0], b.y + v[1]].color == b.color &&
 					(grid[b.x + v[0], b.y + v[1]].type == BlockType.Normal || grid[b.x + v[0], b.y + v[1]].type == BlockType.Clear) &&
 					!connected.Contains(grid[b.x + v[0], b.y + v[1]])) {
-					clearConnected(grid[b.x + v[0], b.y + v[1]]);
+					getConnected(grid[b.x + v[0], b.y + v[1]]);
 				}
 			}
 		}

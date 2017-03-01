@@ -14,8 +14,8 @@ namespace PuzzleFighter {
 		public BlockType type { get; set; }
 		public int unlockTime { get; set; }
 		public bool inPowerGem { get; set;  }
-		Array colorValues = Enum.GetValues(typeof(BlockColor));
-		Array typeValues = Enum.GetValues(typeof(BlockType));
+		public static Array colorValues = Enum.GetValues(typeof(BlockColor));
+		public static Array typeValues = Enum.GetValues(typeof(BlockType));
 		public static readonly Random random = new Random();
 		public Block(int x, int y, BlockColor color, BlockType type, int unlockTime) {
 			this.x = x;

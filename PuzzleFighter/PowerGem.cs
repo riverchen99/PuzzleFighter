@@ -26,7 +26,6 @@ namespace PuzzleFighter {
 
 		public int GetHashCode(PowerGem a) {
 			return a.GetHashCode();
-			//return 1000 * a.x + a.y;
 		}
 	}
 }
