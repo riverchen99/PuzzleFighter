@@ -28,7 +28,7 @@ namespace PuzzleFighter {
 			this.Load += new EventHandler(PuzzleFighterGame_CreateBackBuffer);
 			this.Paint += new PaintEventHandler(PuzzleFighterGame_Paint);
 
-			GameTimer.Interval = 250; // ms
+			GameTimer.Interval = 1000; // ms
 			GameTimer.Tick += new EventHandler(GameTimer_Tick);
 			GameTimer.Start();
 
@@ -134,7 +134,7 @@ namespace PuzzleFighter {
 			}
 		}
 		void drawPowerGems(Graphics g, Board b) {
-			Pen pen = new Pen(Color.Turquoise, 3);
+			Pen pen = new Pen(Color.Tomato, 3);
 			foreach (PowerGem p in b.powerGems) {
 				g.DrawRectangle(pen, gridSize * p.x, gridSize * p.y - gridSize * (p.height-1), gridSize * p.width, gridSize * p.height);
 			}

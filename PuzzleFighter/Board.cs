@@ -24,14 +24,15 @@ namespace PuzzleFighter {
 			score = 0;
 			powerGems = new HashSet<PowerGem>(new PowerGemEqualityComparer());
 		}
-
+		bool changed;
 		public void update() {
-			bool changed;
 			do {
+				changed = false;
 				detect2x2();
 				expandPowerGems();
+				conbinePowerGems();
 				clearBlocks();
-				changed = dropBlocks();
+				dropBlocks();
 			} while (changed);
 		}
 
@@ -92,7 +93,6 @@ namespace PuzzleFighter {
 		}
 
 		public bool dropBlocks() {
-			bool changed = false;
 			for (int i = 0; i < xSize; i++) {
 				for (int j = ySize - 2; j >= 0; j--) {
 					if (grid[i, j] != null) {
@@ -178,6 +178,7 @@ namespace PuzzleFighter {
 						grid[i, j].color == grid[i + 1, j].color &&
 						grid[i, j].color == grid[i, j - 1].color &&
 						grid[i, j].color == grid[i + 1, j - 1].color &&
+						!grid[i, j].inPowerGem &&
 						!grid[i + 1, j].inPowerGem &&
 						!grid[i, j - 1].inPowerGem &&
 						!grid[i + 1, j - 1].inPowerGem) {
@@ -186,7 +187,8 @@ namespace PuzzleFighter {
 							grid[i + 1, j].inPowerGem = true;
 							grid[i, j - 1].inPowerGem = true;
 							grid[i + 1, j - 1].inPowerGem = true;
-							Console.WriteLine(i + " " + j);
+							Console.WriteLine("new powergem: " + i + " " + j);
+							changed = true;
 						}
 					}
 				}
@@ -197,7 +199,10 @@ namespace PuzzleFighter {
 			foreach (PowerGem p in powerGems) {
 				Boolean expandUp = true;
 				for (int i = 0; i < p.width; i++) {
-					if (!checkValid(p.x + i, p.y - p.height) || grid[p.x + i, p.y - p.height] == null || grid[p.x + i, p.y - p.height].color != p.color) {
+					if (!checkValid(p.x + i, p.y - p.height) ||
+						grid[p.x + i, p.y - p.height] == null ||
+						grid[p.x + i, p.y - p.height].color != p.color ||
+						grid[p.x + i, p.y - p.height].inPowerGem) {
 						expandUp = false;
 					}
 				}
@@ -206,16 +211,23 @@ namespace PuzzleFighter {
 						grid[p.x + i, p.y - p.height].inPowerGem = true;
 					}
 					p.height++;
+					changed = true;
 					Console.WriteLine("expanded up!!");
 				}
 
 				Boolean expandRight = true;
 				Boolean expandLeft = true;
 				for (int i = 0; i < p.height; i++) {
-					if (!checkValid(p.x + p.width, p.y - i) || grid[p.x + p.width, p.y - i]  == null || grid[p.x + p.width, p.y - i].color != p.color) {
+					if (!checkValid(p.x + p.width, p.y - i) ||
+						grid[p.x + p.width, p.y - i] == null ||
+						grid[p.x + p.width, p.y - i].color != p.color ||
+						grid[p.x + p.width, p.y - i].inPowerGem) {
 						expandRight = false;
 					}
-					if (!checkValid(p.x - 1, p.y - i) || grid[p.x - 1, p.y - i] == null || grid[p.x - 1, p.y - i].color != p.color) {
+					if (!checkValid(p.x - 1, p.y - i) ||
+						grid[p.x - 1, p.y - i] == null ||
+						grid[p.x - 1, p.y - i].color != p.color ||
+						grid[p.x - 1, p.y - i].inPowerGem) {
 						expandLeft = false;
 					}
 				}
@@ -224,6 +236,7 @@ namespace PuzzleFighter {
 						grid[p.x + p.width, p.y - i].inPowerGem = true;
 					}
 					p.width++;
+					changed = true;
 					Console.WriteLine("expanded right!!");
 				}
 				if (expandLeft) {
@@ -232,8 +245,29 @@ namespace PuzzleFighter {
 					}
 					p.x--;
 					p.width++;
+					changed = true;
 					Console.WriteLine("expanded left!!");
 				}
+			}
+		}
+		public void conbinePowerGems() {
+			List<PowerGem> toRemove = new List<PowerGem>();
+			foreach (PowerGem p1 in powerGems) {
+				foreach (PowerGem p2 in powerGems) {
+					if (p1.color == p2.color && p1.x == p2.x && p1.y - p1.height == p2.y && p1.width == p2.width) {
+						toRemove.Add(p2);
+						p1.height += p2.height;
+					}
+					if (p1.color == p2.color && p1.y == p2.y && p1.x + p1.width == p2.x && p1.height == p2.height && p1.color == p2.color) {
+						toRemove.Add(p2);
+						p1.width += p2.width;
+					}
+				}
+			}
+			foreach (PowerGem p in toRemove) {
+				Console.WriteLine("removed " + p.x + " " + p.y);
+				powerGems.Remove(p);
+				changed = true;
 			}
 		}
 	}

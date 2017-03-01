@@ -20,8 +20,8 @@ namespace PuzzleFighter {
 			this.b2 = new Block(x2, y2);
 		}
 		public Piece(int xSize, int ySize) {
-			this.b1 = new Block(xSize / 2, 0, BlockColor.Red, BlockType.Normal, 0);
-			this.b2 = new Block(xSize / 2, 1, BlockColor.Red, BlockType.Normal, 0);
+			this.b1 = new Block(xSize / 2, 0);
+			this.b2 = new Block(xSize / 2, 1);
 		}
 		public override String ToString() {
 			return "block 1: " + b1.x + ", " + b1.y + ", " + b1.color + ", " + b1.type + "\n" +
