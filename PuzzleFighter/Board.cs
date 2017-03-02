@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using System.Collections;
+using System.Threading;
 
 namespace PuzzleFighter {
 	public class Board {
@@ -24,20 +25,13 @@ namespace PuzzleFighter {
 			score = 0;
 			powerGems = new HashSet<PowerGem>(new PowerGemEqualityComparer());
 		}
-		bool changed;
-		public void update() {
-			do {
-				changed = false;
-				detect2x2();
-				expandPowerGems();
-				conbinePowerGems();
-				clearBlocks();
-				dropBlocks();
-				dropPowerGems();
-			} while (changed);
+
+		public bool checkValid(int x, int y) {
+			return (x >= 0 && x < xSize && y >= 0 && y < ySize);
 		}
 
-		public void moveCurrent(Piece.Direction d) {
+		#region movement
+		public bool moveCurrent(Piece.Direction d) {
 			if (checkValid(currentPiece.b1.x + Piece.directionVectors[(int)d][0], currentPiece.b1.y + Piece.directionVectors[(int)d][1]) &&
 				checkValid(currentPiece.b2.x + Piece.directionVectors[(int)d][0], currentPiece.b2.y + Piece.directionVectors[(int)d][1]) &&
 				grid[currentPiece.b1.x + Piece.directionVectors[(int)d][0], currentPiece.b1.y + Piece.directionVectors[(int)d][1]] == null &&
@@ -45,7 +39,9 @@ namespace PuzzleFighter {
 				currentPiece.move(d);
 			} else if (d == Piece.Direction.Down) {
 				lockPiece();
+				return true;
 			}
+			return false;
 		}
 
 		public void rotateCurrent(Piece.rotateDirection d) {
@@ -75,16 +71,14 @@ namespace PuzzleFighter {
 				currentPiece.b1.y = ty;
 			}
 		}
+		#endregion
 
-		public bool checkValid(int x, int y) {
-			return (x >= 0 && x < xSize && y >= 0 && y < ySize);
-		}
-
+		#region drop
 		public void lockPiece() {
 			grid[currentPiece.b1.x, currentPiece.b1.y] = currentPiece.b1;
 			grid[currentPiece.b2.x, currentPiece.b2.y] = currentPiece.b2;
 			dropBlocks();
-			update();
+			updateLockBlocks();
 			if (grid[xSize / 2, 0] == null && grid[xSize / 2, 1] == null) {
 				currentPiece = nextPiece;
 				nextPiece = new Piece(xSize, ySize);
@@ -93,7 +87,9 @@ namespace PuzzleFighter {
 			}
 		}
 
+		bool changed;
 		public bool dropBlocks() {
+			changed = false;
 			for (int i = 0; i < xSize; i++) {
 				for (int j = ySize - 2; j >= 0; j--) {
 					if (grid[i, j] != null && !grid[i, j].inPowerGem) {
@@ -112,6 +108,7 @@ namespace PuzzleFighter {
 		}
 
 		public bool dropPowerGems() {
+			changed = false;
 			foreach (PowerGem p in powerGems) {
 				int minFallHeight = Int32.MaxValue;
 				for (int i = p.x; i < p.x + p.width; i++) {
@@ -136,7 +133,9 @@ namespace PuzzleFighter {
 			}
 			return changed;
 		}
+		#endregion
 
+		#region clearing
 		public void clearBlocks() {
 			List<Block> blocksToRemove = new List<Block>();
 			List<PowerGem> gemsToRemove = new List<PowerGem>();
@@ -192,16 +191,9 @@ namespace PuzzleFighter {
 				}
 			}
 		}
+		#endregion
 
-		public void printGrid() {
-			for (int j = 0; j < ySize; j++) {
-				for (int i = 0; i < xSize; i++) {
-					Console.Write(grid[i, j] == null ? 0 : 1);
-				}
-				Console.WriteLine();
-			}
-		}
-
+		#region powergems
 		public HashSet<PowerGem> powerGems;
 		public void detect2x2() {
 			for (int i = 0; i < xSize - 1; i++) {
@@ -223,7 +215,6 @@ namespace PuzzleFighter {
 							grid[i, j - 1].inPowerGem = true;
 							grid[i + 1, j - 1].inPowerGem = true;
 							Console.WriteLine("new powergem: " + i + " " + j);
-							changed = true;
 						}
 					}
 				}
@@ -246,7 +237,6 @@ namespace PuzzleFighter {
 						grid[p.x + i, p.y - p.height].inPowerGem = true;
 					}
 					p.height++;
-					changed = true;
 					Console.WriteLine("expanded up!!");
 				}
 
@@ -271,7 +261,6 @@ namespace PuzzleFighter {
 						grid[p.x + p.width, p.y - i].inPowerGem = true;
 					}
 					p.width++;
-					changed = true;
 					Console.WriteLine("expanded right!!");
 				}
 				if (expandLeft) {
@@ -280,7 +269,6 @@ namespace PuzzleFighter {
 					}
 					p.x--;
 					p.width++;
-					changed = true;
 					Console.WriteLine("expanded left!!");
 				}
 			}
@@ -302,7 +290,28 @@ namespace PuzzleFighter {
 			foreach (PowerGem p in toRemove) {
 				Console.WriteLine("removed " + p.x + " " + p.y);
 				powerGems.Remove(p);
-				changed = true;
+			}
+		}
+		#endregion
+
+		public void updateLockBlocks() {
+			for (int i = 0; i < xSize; i++) {
+				for (int j = 0; j < ySize; j++) {
+					if (grid[i, j] != null && grid[i, j].type == BlockType.Lock && grid[i, j].unlockTime > 1) {
+						grid[i, j].unlockTime--;
+					} else if (grid[i, j] != null && grid[i, j].type == BlockType.Lock && grid[i, j].unlockTime == 1) {
+						grid[i, j].type = BlockType.Normal;
+					}
+				}
+			}
+		}
+
+		public void printGrid() {
+			for (int j = 0; j < ySize; j++) {
+				for (int i = 0; i < xSize; i++) {
+					Console.Write(grid[i, j] == null ? 0 : 1);
+				}
+				Console.WriteLine();
 			}
 		}
 	}

@@ -5,6 +5,7 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -15,7 +16,7 @@ namespace PuzzleFighter {
 		int ySize = 15;
 		int gridSize = 25;
 		Bitmap Backbuffer;
-		Timer GameTimer = new Timer();
+		System.Windows.Forms.Timer GameTimer = new System.Windows.Forms.Timer();
 
 		public PuzzleFighterGame() {
 			InitializeComponent();
@@ -37,11 +38,26 @@ namespace PuzzleFighter {
 
 		void GameTimer_Tick(object sender, EventArgs e) {
 			// handle logic
-			b.moveCurrent(Piece.Direction.Down);
+			if (b.moveCurrent(Piece.Direction.Down)) {
+				updateBoard();
+			}
 			draw();
 		}
 
-		//input
+		void updateBoard() {
+			do {
+				// piece locked and dropped
+				draw();
+				Thread.Sleep(100);
+				b.detect2x2();
+				b.expandPowerGems();
+				b.conbinePowerGems();
+				b.clearBlocks();
+				draw();
+				Thread.Sleep(100);
+			} while (b.dropBlocks() || b.dropPowerGems());
+		}
+		
 		int colorIndex = 0;
 		int typeIndex = 0;
 		void PuzzleFighterGame_KeyPress(object sender, KeyPressEventArgs e) {
@@ -57,6 +73,7 @@ namespace PuzzleFighter {
 					break;
 				case 'w':
 					b.lockPiece();
+					updateBoard();
 					break;
 				case 'j':
 					b.rotateCurrent(Piece.rotateDirection.CW);
@@ -71,7 +88,7 @@ namespace PuzzleFighter {
 					b.currentPiece.b2.type = BlockType.Normal;
 					break;
 				case '1':
-					b.currentPiece.b1.color = (BlockColor) Block.colorValues.GetValue(colorIndex++ % 4);
+					b.currentPiece.b1.color = (BlockColor)Block.colorValues.GetValue(colorIndex++ % 4);
 					break;
 				case '2':
 					b.currentPiece.b2.color = (BlockColor)Block.colorValues.GetValue(colorIndex++ % 4);
@@ -82,11 +99,14 @@ namespace PuzzleFighter {
 				case '4':
 					b.currentPiece.b2.type = (BlockType)Block.typeValues.GetValue(typeIndex++ % 4);
 					break;
+				case '5':
+					b.currentPiece.b1.unlockTime++;
+					break;
 			}
 			draw();
 		}
 
-		// graphics
+		#region graphics
 		void PuzzleFighterGame_Paint(object sender, PaintEventArgs e) {
 			if (Backbuffer != null) {
 				e.Graphics.DrawImageUnscaled(Backbuffer, Point.Empty);
@@ -110,6 +130,7 @@ namespace PuzzleFighter {
 					drawText(g);
 				}
 				Invalidate();
+				Update();
 			}
 		}
 		void drawGrid(Graphics g) {
@@ -133,6 +154,9 @@ namespace PuzzleFighter {
 			} else if (b.type == BlockType.Diamond) {
 				brush.Color = Color.White;
 				g.FillPie(brush, gridSize * b.x, gridSize * b.y, gridSize, gridSize, -60, -60);
+			} else if (b.type == BlockType.Lock) {
+				g.FillRectangle(brush, gridSize * b.x, gridSize * b.y, gridSize, gridSize);
+				g.DrawString(b.unlockTime.ToString(), new Font("Comic Sans", 16), new SolidBrush(Color.Tomato), gridSize * b.x, gridSize * b.y);
 			}
 			brush.Dispose();
 		}
@@ -163,13 +187,16 @@ namespace PuzzleFighter {
 			}
 		}
 		void drawText(Graphics g) {
-			g.DrawString(b.score.ToString(), new Font("Comic Sans", 16), new SolidBrush(Color.White), gridSize * (xSize + 1), gridSize * 3);
+			Font f = new Font("Comic Sans", 16);
+			SolidBrush br = new SolidBrush(Color.White);
+			g.DrawString(b.score.ToString(), f, br, gridSize * (xSize + 1), gridSize * 3);
 			for (int i = 0; i < xSize; i++) {
-				g.DrawString(i.ToString(), new Font("Comic Sans", 16), new SolidBrush(Color.White), i * gridSize, ySize * gridSize);
+				g.DrawString(i.ToString(), f, br, i * gridSize, ySize * gridSize);
 			}
 			for (int i = 0; i < ySize; i++) {
-				g.DrawString(i.ToString(), new Font("Comic Sans", 16), new SolidBrush(Color.White), xSize * gridSize, i * gridSize);
+				g.DrawString(i.ToString(), f, br, xSize * gridSize, i * gridSize);
 			}
 		}
+		#endregion
 	}
 }
