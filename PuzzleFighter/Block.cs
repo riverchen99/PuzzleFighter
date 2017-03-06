@@ -29,7 +29,7 @@ namespace PuzzleFighter {
 			this.x = x;
 			this.y = y;
 			this.color = (BlockColor)colorValues.GetValue(random.Next(colorValues.Length));
-			this.type = random.NextDouble() < .75 ? BlockType.Normal : (random.NextDouble() < .75 ? BlockType.Clear : BlockType.Diamond);
+			this.type = random.NextDouble() < .75 ? BlockType.Normal : BlockType.Clear;
 			this.unlockTime = -1;
 			this.inPowerGem = false;
 		}

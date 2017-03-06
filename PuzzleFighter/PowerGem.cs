@@ -23,7 +23,6 @@ namespace PuzzleFighter {
 		public bool Equals(PowerGem a, PowerGem b) {
 			return a.x == b.x && a.y == b.y;
 		}
-
 		public int GetHashCode(PowerGem a) {
 			return a.GetHashCode();
 		}

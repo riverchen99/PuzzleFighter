@@ -15,6 +15,7 @@ namespace PuzzleFighter {
 		public int xSize { get; set; }
 		public int ySize { get; set; }
 		public int score { get; set; }
+		public int pieceCount { get; set; }
 
 		public Board(int xSize, int ySize) { // x: 0 -> 5, y: 0 - 14 (two hidden)
 			this.xSize = xSize;
@@ -23,6 +24,7 @@ namespace PuzzleFighter {
 			currentPiece = new Piece(xSize, ySize);
 			nextPiece = new Piece(xSize, ySize);
 			score = 0;
+			pieceCount = 1;
 			powerGems = new HashSet<PowerGem>(new PowerGemEqualityComparer());
 		}
 
@@ -82,9 +84,13 @@ namespace PuzzleFighter {
 			if (grid[xSize / 2, 0] == null && grid[xSize / 2, 1] == null) {
 				currentPiece = nextPiece;
 				nextPiece = new Piece(xSize, ySize);
+				if (pieceCount % 25 == 0) {
+					if (Block.random.NextDouble() < .5) { nextPiece.b1.type = BlockType.Diamond; } else { nextPiece.b2.type = BlockType.Diamond; }
+				}
 			} else {
 				// game over; 
 			}
+			pieceCount++;
 		}
 
 		bool changed;
@@ -294,6 +300,7 @@ namespace PuzzleFighter {
 		}
 		#endregion
 
+		#region lockblocks
 		public void updateLockBlocks() {
 			for (int i = 0; i < xSize; i++) {
 				for (int j = 0; j < ySize; j++) {
@@ -305,6 +312,7 @@ namespace PuzzleFighter {
 				}
 			}
 		}
+		#endregion
 
 		public void printGrid() {
 			for (int j = 0; j < ySize; j++) {
