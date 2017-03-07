@@ -45,8 +45,10 @@ namespace PuzzleFighter {
 		}
 
 		void updateBoard() {
+			bool changed = false;
 			do {
 				// piece locked and dropped
+				changed = false;
 				draw();
 				Thread.Sleep(100);
 				b.detect2x2();
@@ -55,7 +57,9 @@ namespace PuzzleFighter {
 				b.clearBlocks();
 				draw();
 				Thread.Sleep(100);
-			} while (b.dropBlocks() || b.dropPowerGems());
+				changed = b.dropBlocks();
+				changed = b.dropPowerGems() || changed; // so it doesn't short circuit
+			} while (changed);
 		}
 		
 		int colorIndex = 0;
@@ -151,6 +155,8 @@ namespace PuzzleFighter {
 				g.FillRectangle(brush, gridSize * b.x, gridSize * b.y, gridSize, gridSize);
 			} else if (b.type == BlockType.Clear) {
 				g.FillEllipse(brush, gridSize * b.x, gridSize * b.y, gridSize, gridSize);
+				brush.Color = Color.White;
+				g.FillEllipse(brush, gridSize * b.x + gridSize / 3, gridSize * b.y + gridSize / 3, gridSize / 3, gridSize / 3);
 			} else if (b.type == BlockType.Diamond) {
 				brush.Color = Color.White;
 				g.FillPie(brush, gridSize * b.x, gridSize * b.y, gridSize, gridSize, -60, -60);
@@ -166,6 +172,8 @@ namespace PuzzleFighter {
 				g.FillRectangle(brush, gridSize * (xSize + 1), gridSize, gridSize, gridSize);
 			} else if (b.nextPiece.b1.type == BlockType.Clear) {
 				g.FillEllipse(brush, gridSize * (xSize + 1), gridSize, gridSize, gridSize);
+				brush.Color = Color.White;
+				g.FillEllipse(brush, gridSize * (xSize + 1) + gridSize / 3, gridSize + gridSize / 3, gridSize / 3, gridSize / 3);
 			} else if (b.nextPiece.b1.type == BlockType.Diamond) {
 				brush.Color = Color.White;
 				g.FillPie(brush, gridSize * (xSize + 1), gridSize, gridSize, gridSize, -60, -60);
@@ -175,6 +183,8 @@ namespace PuzzleFighter {
 				g.FillRectangle(brush, gridSize * (xSize + 1), gridSize * 2, gridSize, gridSize);
 			} else if (b.nextPiece.b2.type == BlockType.Clear) {
 				g.FillEllipse(brush, gridSize * (xSize + 1), gridSize * 2, gridSize, gridSize);
+				brush.Color = Color.White;
+				g.FillEllipse(brush, gridSize * (xSize + 1) + gridSize / 3, gridSize*2 + gridSize / 3, gridSize / 3, gridSize / 3);
 			} else if (b.nextPiece.b2.type == BlockType.Diamond) {
 				brush.Color = Color.White;
 				g.FillPie(brush, gridSize * (xSize + 1), gridSize * 2, gridSize, gridSize, -60, -60);

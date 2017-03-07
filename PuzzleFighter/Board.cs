@@ -93,9 +93,8 @@ namespace PuzzleFighter {
 			pieceCount++;
 		}
 
-		bool changed;
 		public bool dropBlocks() {
-			changed = false;
+			bool changed = false;
 			for (int i = 0; i < xSize; i++) {
 				for (int j = ySize - 2; j >= 0; j--) {
 					if (grid[i, j] != null && !grid[i, j].inPowerGem) {
@@ -114,7 +113,7 @@ namespace PuzzleFighter {
 		}
 
 		public bool dropPowerGems() {
-			changed = false;
+			bool changed = false;
 			foreach (PowerGem p in powerGems) {
 				int minFallHeight = Int32.MaxValue;
 				for (int i = p.x; i < p.x + p.width; i++) {
@@ -220,7 +219,6 @@ namespace PuzzleFighter {
 							grid[i + 1, j].inPowerGem = true;
 							grid[i, j - 1].inPowerGem = true;
 							grid[i + 1, j - 1].inPowerGem = true;
-							Console.WriteLine("new powergem: " + i + " " + j);
 						}
 					}
 				}
@@ -243,7 +241,6 @@ namespace PuzzleFighter {
 						grid[p.x + i, p.y - p.height].inPowerGem = true;
 					}
 					p.height++;
-					Console.WriteLine("expanded up!!");
 				}
 
 				Boolean expandRight = true;
@@ -267,7 +264,6 @@ namespace PuzzleFighter {
 						grid[p.x + p.width, p.y - i].inPowerGem = true;
 					}
 					p.width++;
-					Console.WriteLine("expanded right!!");
 				}
 				if (expandLeft) {
 					for (int i = 0; i < p.height; i++) {
@@ -275,7 +271,6 @@ namespace PuzzleFighter {
 					}
 					p.x--;
 					p.width++;
-					Console.WriteLine("expanded left!!");
 				}
 			}
 		}
@@ -294,7 +289,6 @@ namespace PuzzleFighter {
 				}
 			}
 			foreach (PowerGem p in toRemove) {
-				Console.WriteLine("removed " + p.x + " " + p.y);
 				powerGems.Remove(p);
 			}
 		}
