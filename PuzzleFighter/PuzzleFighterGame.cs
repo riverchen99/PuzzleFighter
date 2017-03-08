@@ -45,21 +45,25 @@ namespace PuzzleFighter {
 		}
 
 		void updateBoard() {
-			bool changed = false;
+			bool canCombo;
 			do {
-				// piece locked and dropped
-				changed = false;
-				draw();
-				Thread.Sleep(100);
+				// piece locked and dropped to bottom
+				canCombo = false;
 				b.detect2x2();
 				b.expandPowerGems();
 				b.conbinePowerGems();
-				b.clearBlocks();
 				draw();
 				Thread.Sleep(100);
-				changed = b.dropBlocks();
-				changed = b.dropPowerGems() || changed; // so it doesn't short circuit
-			} while (changed);
+
+				canCombo = b.clearBlocks();
+				draw();
+				Thread.Sleep(100);
+
+				do {
+					draw();
+					Thread.Sleep(50);
+				} while (b.dropOnce() | b.dropPowerGemsOnce());
+			} while (canCombo);
 		}
 		
 		int colorIndex = 0;

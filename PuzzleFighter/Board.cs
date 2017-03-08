@@ -134,14 +134,57 @@ namespace PuzzleFighter {
 					}
 					p.y = p.y + minFallHeight;
 				}
+			}
+			return changed;
+		}
 
+		public bool dropOnce() {
+			bool changed = false;
+			for (int i = 0; i < xSize; i++) {
+				for (int j = ySize - 2; j >= 0; j--) {
+					if (grid[i, j] != null && !grid[i, j].inPowerGem) {
+						if (grid[i, j + 1] == null) {
+							grid[i, j].y++;
+							grid[i, j + 1] = grid[i, j];
+							grid[i, j] = null;
+							changed = true;
+						}
+					}
+				}
+			}
+			return changed;
+		}
+
+		public bool dropPowerGemsOnce() {
+			bool changed = false;
+			foreach (PowerGem p in powerGems) {
+				bool canDrop = true;
+				if (p.y + 1 < ySize) {
+					for (int i = p.x; i < p.x + p.width; i++) {
+						if (grid[i, p.y + 1] != null) {
+							canDrop = false;
+						}
+					}
+					if (canDrop) {
+						for (int i = p.x; i < p.x + p.width; i++) {
+							for (int j = p.y; j > p.y - p.height; j--) {
+								grid[i, j].y = j + 1;
+								grid[i, j + 1] = grid[i, j];
+								grid[i, j] = null;
+								changed = true;
+							}
+						}
+						p.y = p.y + 1;
+					}
+				}
 			}
 			return changed;
 		}
 		#endregion
 
 		#region clearing
-		public void clearBlocks() {
+		public bool clearBlocks() {
+			bool changed = false;
 			List<Block> blocksToRemove = new List<Block>();
 			List<PowerGem> gemsToRemove = new List<PowerGem>();
 			for (int i = 0; i < xSize; i++) {
@@ -168,7 +211,6 @@ namespace PuzzleFighter {
 					}
 				}
 			}
-
 			foreach (Block b in blocksToRemove) {
 				foreach (PowerGem p in powerGems) {
 					if (b.x == p.x && b.y == p.y) {
@@ -177,10 +219,12 @@ namespace PuzzleFighter {
 				}
 				grid[b.x, b.y] = null;
 				score++;
-			}
+				changed = true;
+			} 
 			foreach (PowerGem p in gemsToRemove) {
 				powerGems.Remove(p);
 			}
+			return changed;
 		}
 
 		private List<Block> connected;
@@ -213,7 +257,11 @@ namespace PuzzleFighter {
 						!grid[i, j].inPowerGem &&
 						!grid[i + 1, j].inPowerGem &&
 						!grid[i, j - 1].inPowerGem &&
-						!grid[i + 1, j - 1].inPowerGem) {
+						!grid[i + 1, j - 1].inPowerGem &&
+						grid[i, j].type == BlockType.Normal &&
+						grid[i + 1, j].type == BlockType.Normal &&
+						grid[i, j - 1].type == BlockType.Normal &&
+						grid[i + 1, j - 1].type == BlockType.Normal) {
 						if (powerGems.Add(new PowerGem(i, j, grid[i, j].color))) {
 							grid[i, j].inPowerGem = true;
 							grid[i + 1, j].inPowerGem = true;
@@ -232,7 +280,8 @@ namespace PuzzleFighter {
 					if (!checkValid(p.x + i, p.y - p.height) ||
 						grid[p.x + i, p.y - p.height] == null ||
 						grid[p.x + i, p.y - p.height].color != p.color ||
-						grid[p.x + i, p.y - p.height].inPowerGem) {
+						grid[p.x + i, p.y - p.height].inPowerGem ||
+						grid[p.x + i, p.y - p.height].type != BlockType.Normal) {
 						expandUp = false;
 					}
 				}
@@ -249,13 +298,15 @@ namespace PuzzleFighter {
 					if (!checkValid(p.x + p.width, p.y - i) ||
 						grid[p.x + p.width, p.y - i] == null ||
 						grid[p.x + p.width, p.y - i].color != p.color ||
-						grid[p.x + p.width, p.y - i].inPowerGem) {
+						grid[p.x + p.width, p.y - i].inPowerGem ||
+						grid[p.x + p.width, p.y - i].type != BlockType.Normal) {
 						expandRight = false;
 					}
 					if (!checkValid(p.x - 1, p.y - i) ||
 						grid[p.x - 1, p.y - i] == null ||
 						grid[p.x - 1, p.y - i].color != p.color ||
-						grid[p.x - 1, p.y - i].inPowerGem) {
+						grid[p.x - 1, p.y - i].inPowerGem ||
+						grid[p.x - 1, p.y - i].type != BlockType.Normal) {
 						expandLeft = false;
 					}
 				}
