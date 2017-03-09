@@ -37,7 +37,6 @@ namespace PuzzleFighter {
 		}
 
 		void GameTimer_Tick(object sender, EventArgs e) {
-			// handle logic
 			if (b.moveCurrent(Piece.Direction.Down)) {
 				updateBoard();
 			}
@@ -46,6 +45,9 @@ namespace PuzzleFighter {
 
 		void updateBoard() {
 			bool canCombo;
+			b.lockPiece();
+			b.dropBlocks();
+			b.updateLockBlocks();
 			do {
 				// piece locked and dropped to bottom
 				canCombo = false;
@@ -65,7 +67,34 @@ namespace PuzzleFighter {
 				} while (b.dropOnce() | b.dropPowerGemsOnce());
 			} while (canCombo);
 		}
-		
+
+		void sendLockBlocks(int n) {
+			BlockColor[][] pattern = new BlockColor[][] 
+			{
+				new BlockColor[] { BlockColor.Red, BlockColor.Red, BlockColor.Red, BlockColor.Red, BlockColor.Red, BlockColor.Red, BlockColor.Red, BlockColor.Red, BlockColor.Red, BlockColor.Red },
+				new BlockColor[] { BlockColor.Blue, BlockColor.Blue, BlockColor.Blue, BlockColor.Blue, BlockColor.Blue, BlockColor.Blue, BlockColor.Blue, BlockColor.Blue, BlockColor.Blue, BlockColor.Blue }
+			};
+
+			int patternRow = 0;
+			while (n > 0) {
+				if (n > xSize) {
+					b.sendLockBlocks(xSize, pattern[patternRow], false);
+				} else {
+					b.sendLockBlocks(n, pattern[patternRow], false);
+				}
+				n -= xSize;
+				if (!b.dropOnce()) {
+					Console.WriteLine("game over");
+				}
+				draw();
+				Thread.Sleep(50);
+			}
+			do {
+				draw();
+				Thread.Sleep(50);
+			} while (b.dropOnce() | b.dropPowerGemsOnce());
+
+		}
 		int colorIndex = 0;
 		int typeIndex = 0;
 		void PuzzleFighterGame_KeyPress(object sender, KeyPressEventArgs e) {
@@ -80,7 +109,6 @@ namespace PuzzleFighter {
 					b.moveCurrent(Piece.Direction.Right);
 					break;
 				case 'w':
-					b.lockPiece();
 					updateBoard();
 					break;
 				case 'j':
@@ -109,6 +137,10 @@ namespace PuzzleFighter {
 					break;
 				case '5':
 					b.currentPiece.b1.unlockTime++;
+					break;
+				case 'p':
+					updateBoard();
+					sendLockBlocks(15);
 					break;
 			}
 			draw();

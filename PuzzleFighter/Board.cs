@@ -40,7 +40,6 @@ namespace PuzzleFighter {
 				grid[currentPiece.b2.x + Piece.directionVectors[(int)d][0], currentPiece.b2.y + Piece.directionVectors[(int)d][1]] == null) {
 				currentPiece.move(d);
 			} else if (d == Piece.Direction.Down) {
-				lockPiece();
 				return true;
 			}
 			return false;
@@ -79,8 +78,6 @@ namespace PuzzleFighter {
 		public void lockPiece() {
 			grid[currentPiece.b1.x, currentPiece.b1.y] = currentPiece.b1;
 			grid[currentPiece.b2.x, currentPiece.b2.y] = currentPiece.b2;
-			dropBlocks();
-			updateLockBlocks();
 			if (grid[xSize / 2, 0] == null && grid[xSize / 2, 1] == null) {
 				currentPiece = nextPiece;
 				nextPiece = new Piece(xSize, ySize);
@@ -220,7 +217,7 @@ namespace PuzzleFighter {
 				grid[b.x, b.y] = null;
 				score++;
 				changed = true;
-			} 
+			}
 			foreach (PowerGem p in gemsToRemove) {
 				powerGems.Remove(p);
 			}
@@ -354,6 +351,15 @@ namespace PuzzleFighter {
 					} else if (grid[i, j] != null && grid[i, j].type == BlockType.Lock && grid[i, j].unlockTime == 1) {
 						grid[i, j].type = BlockType.Normal;
 					}
+				}
+			}
+		}
+
+		public void sendLockBlocks(int n, BlockColor[] pattern, bool diamond) {
+			for (int i = 0; i < xSize; i++) {
+				if (grid[i, 0] == null && n > 0) {
+					grid[i, 0] = new Block(i, 0, pattern[i], BlockType.Lock, diamond ? 3 : 5);
+					n--;
 				}
 			}
 		}
