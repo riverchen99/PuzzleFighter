@@ -188,9 +188,13 @@ namespace PuzzleFighter {
 				for (int j = 0; j < ySize; j++) {
 					if (grid[i, j] != null && grid[i, j].type == BlockType.Clear && !blocksToRemove.Contains(grid[i, j])) {
 						connected = new List<Block>();
+						connectedLockBlocks = new List<Block>();
 						getConnected(grid[i, j]);
 						if (connected.Count > 1) {
 							foreach (Block bl in connected) {
+								blocksToRemove.Add(bl);
+							}
+							foreach (Block bl in connectedLockBlocks) {
 								blocksToRemove.Add(bl);
 							}
 						}
@@ -225,6 +229,7 @@ namespace PuzzleFighter {
 		}
 
 		private List<Block> connected;
+		private List<Block> connectedLockBlocks;
 		public void getConnected(Block b) {
 			connected.Add(b);
 			foreach (int[] v in Piece.directionVectors) {
@@ -234,6 +239,11 @@ namespace PuzzleFighter {
 					(grid[b.x + v[0], b.y + v[1]].type == BlockType.Normal || grid[b.x + v[0], b.y + v[1]].type == BlockType.Clear) &&
 					!connected.Contains(grid[b.x + v[0], b.y + v[1]])) {
 					getConnected(grid[b.x + v[0], b.y + v[1]]);
+				} else if (checkValid(b.x + v[0], b.y + v[1]) &&
+					grid[b.x + v[0], b.y + v[1]] != null &&
+					(grid[b.x + v[0], b.y + v[1]].type == BlockType.Lock) &&
+					!connected.Contains(grid[b.x + v[0], b.y + v[1]])) {
+					connectedLockBlocks.Add(grid[b.x + v[0], b.y + v[1]]);
 				}
 			}
 		}
