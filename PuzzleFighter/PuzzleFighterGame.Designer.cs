@@ -29,7 +29,7 @@
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(678, 893);
+			this.ClientSize = new System.Drawing.Size(1360, 893);
 			this.KeyPreview = true;
 			this.Name = "PuzzleFighterGame";
 			this.Text = "Form1";

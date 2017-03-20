@@ -16,8 +16,13 @@ namespace PuzzleFighter {
 		public int ySize { get; set; }
 		public int score { get; set; }
 		public int pieceCount { get; set; }
+		public bool gameOver { get; set; }
+		public int id { get; set; }
+		public int lockBuffer { get; set; }
+		private List<Block> connected;
+		private List<Block> connectedLockBlocks;
 
-		public Board(int xSize, int ySize) { // x: 0 -> 5, y: 0 - 14 (two hidden)
+		public Board(int xSize, int ySize, int id) { // x: 0 -> 5, y: 0 - 14 (two hidden)
 			this.xSize = xSize;
 			this.ySize = ySize;
 			grid = new Block[xSize, ySize];
@@ -26,6 +31,9 @@ namespace PuzzleFighter {
 			score = 0;
 			pieceCount = 1;
 			powerGems = new HashSet<PowerGem>(new PowerGemEqualityComparer());
+			gameOver = false;
+			this.id = id;
+			lockBuffer = 0;
 		}
 
 		public bool checkValid(int x, int y) {
@@ -34,17 +42,18 @@ namespace PuzzleFighter {
 
 		#region movement
 		public bool moveCurrent(Piece.Direction d) {
-			if (checkValid(currentPiece.b1.x + Piece.directionVectors[(int)d][0], currentPiece.b1.y + Piece.directionVectors[(int)d][1]) &&
-				checkValid(currentPiece.b2.x + Piece.directionVectors[(int)d][0], currentPiece.b2.y + Piece.directionVectors[(int)d][1]) &&
-				grid[currentPiece.b1.x + Piece.directionVectors[(int)d][0], currentPiece.b1.y + Piece.directionVectors[(int)d][1]] == null &&
-				grid[currentPiece.b2.x + Piece.directionVectors[(int)d][0], currentPiece.b2.y + Piece.directionVectors[(int)d][1]] == null) {
-				currentPiece.move(d);
-			} else if (d == Piece.Direction.Down) {
-				return true;
+			if (currentPiece != null) {
+				if (checkValid(currentPiece.b1.x + Piece.directionVectors[(int)d][0], currentPiece.b1.y + Piece.directionVectors[(int)d][1]) &&
+					checkValid(currentPiece.b2.x + Piece.directionVectors[(int)d][0], currentPiece.b2.y + Piece.directionVectors[(int)d][1]) &&
+					grid[currentPiece.b1.x + Piece.directionVectors[(int)d][0], currentPiece.b1.y + Piece.directionVectors[(int)d][1]] == null &&
+					grid[currentPiece.b2.x + Piece.directionVectors[(int)d][0], currentPiece.b2.y + Piece.directionVectors[(int)d][1]] == null) {
+					currentPiece.move(d);
+				} else if (d == Piece.Direction.Down) {
+					return true;
+				}
 			}
 			return false;
 		}
-
 		public void rotateCurrent(Piece.rotateDirection d) {
 			int[] pieceVector = new int[2] { currentPiece.b1.x - currentPiece.b2.x, currentPiece.b1.y - currentPiece.b2.y };
 			Complex i = new Complex(pieceVector[0], pieceVector[1]);
@@ -74,22 +83,26 @@ namespace PuzzleFighter {
 		}
 		#endregion
 
+		public void newPiece() {
+			currentPiece = nextPiece;
+			nextPiece = new Piece(xSize, ySize);
+			if (pieceCount % 25 == 0) {
+				if (Block.random.NextDouble() < .5) { nextPiece.b1.type = BlockType.Diamond; } else { nextPiece.b2.type = BlockType.Diamond; }
+			}
+			pieceCount++;
+		}
 		#region drop
 		public void lockPiece() {
 			grid[currentPiece.b1.x, currentPiece.b1.y] = currentPiece.b1;
 			grid[currentPiece.b2.x, currentPiece.b2.y] = currentPiece.b2;
+			currentPiece = null;
+			dropBlocks(); // inefficient, fix later
 			if (grid[xSize / 2, 0] == null && grid[xSize / 2, 1] == null) {
-				currentPiece = nextPiece;
-				nextPiece = new Piece(xSize, ySize);
-				if (pieceCount % 25 == 0) {
-					if (Block.random.NextDouble() < .5) { nextPiece.b1.type = BlockType.Diamond; } else { nextPiece.b2.type = BlockType.Diamond; }
-				}
+				;
 			} else {
-				// game over; 
+				gameOver = true;
 			}
-			pieceCount++;
 		}
-
 		public bool dropBlocks() {
 			bool changed = false;
 			for (int i = 0; i < xSize; i++) {
@@ -108,7 +121,6 @@ namespace PuzzleFighter {
 			}
 			return changed;
 		}
-
 		public bool dropPowerGems() {
 			bool changed = false;
 			foreach (PowerGem p in powerGems) {
@@ -134,7 +146,6 @@ namespace PuzzleFighter {
 			}
 			return changed;
 		}
-
 		public bool dropOnce() {
 			bool changed = false;
 			for (int i = 0; i < xSize; i++) {
@@ -151,7 +162,6 @@ namespace PuzzleFighter {
 			}
 			return changed;
 		}
-
 		public bool dropPowerGemsOnce() {
 			bool changed = false;
 			foreach (PowerGem p in powerGems) {
@@ -180,8 +190,8 @@ namespace PuzzleFighter {
 		#endregion
 
 		#region clearing
-		public bool clearBlocks() {
-			bool changed = false;
+		public int clearBlocks() {
+			int sendAmount = 0;
 			List<Block> blocksToRemove = new List<Block>();
 			List<PowerGem> gemsToRemove = new List<PowerGem>();
 			for (int i = 0; i < xSize; i++) {
@@ -220,16 +230,14 @@ namespace PuzzleFighter {
 				}
 				grid[b.x, b.y] = null;
 				score++;
-				changed = true;
+				sendAmount++;
 			}
 			foreach (PowerGem p in gemsToRemove) {
 				powerGems.Remove(p);
+				sendAmount += (p.width * p.height / 2);
 			}
-			return changed;
+			return sendAmount;
 		}
-
-		private List<Block> connected;
-		private List<Block> connectedLockBlocks;
 		public void getConnected(Block b) {
 			connected.Add(b);
 			foreach (int[] v in Piece.directionVectors) {
@@ -241,7 +249,7 @@ namespace PuzzleFighter {
 					getConnected(grid[b.x + v[0], b.y + v[1]]);
 				} else if (checkValid(b.x + v[0], b.y + v[1]) &&
 					grid[b.x + v[0], b.y + v[1]] != null &&
-					(grid[b.x + v[0], b.y + v[1]].type == BlockType.Lock) &&
+					grid[b.x + v[0], b.y + v[1]].type == BlockType.Lock &&
 					!connected.Contains(grid[b.x + v[0], b.y + v[1]])) {
 					connectedLockBlocks.Add(grid[b.x + v[0], b.y + v[1]]);
 				}
@@ -251,7 +259,8 @@ namespace PuzzleFighter {
 
 		#region powergems
 		public HashSet<PowerGem> powerGems;
-		public void detect2x2() {
+		public bool detect2x2() {
+			bool changed = false;
 			for (int i = 0; i < xSize - 1; i++) {
 				for (int j = ySize - 1; j > 0; j--) {
 					if (grid[i, j] != null &&
@@ -274,15 +283,18 @@ namespace PuzzleFighter {
 							grid[i + 1, j].inPowerGem = true;
 							grid[i, j - 1].inPowerGem = true;
 							grid[i + 1, j - 1].inPowerGem = true;
+							changed = true;
 						}
 					}
 				}
 			}
+			return changed;
 		}
-
-		public void expandPowerGems() {
+		public bool expandPowerGems() {
+			bool changed = false;
 			foreach (PowerGem p in powerGems) {
-				Boolean expandUp = true;
+				bool expandUp = true;
+				bool expandDown = true;
 				for (int i = 0; i < p.width; i++) {
 					if (!checkValid(p.x + i, p.y - p.height) ||
 						grid[p.x + i, p.y - p.height] == null ||
@@ -291,6 +303,13 @@ namespace PuzzleFighter {
 						grid[p.x + i, p.y - p.height].type != BlockType.Normal) {
 						expandUp = false;
 					}
+					if (!checkValid(p.x + i, p.y + 1) ||
+						grid[p.x + i, p.y + 1] == null ||
+						grid[p.x + i, p.y + 1].color != p.color ||
+						grid[p.x + i, p.y + 1].inPowerGem ||
+						grid[p.x + i, p.y + 1].type != BlockType.Normal) {
+						expandDown = false;
+					}
 				}
 				if (expandUp) {
 					for (int i = 0; i < p.width; i++) {
@@ -298,9 +317,16 @@ namespace PuzzleFighter {
 					}
 					p.height++;
 				}
+				if (expandDown) {
+					for (int i = 0; i < p.width; i++) {
+						grid[p.x + i, p.y + 1].inPowerGem = true;
+					}
+					p.y++;
+					p.height++;
+				}
 
-				Boolean expandRight = true;
-				Boolean expandLeft = true;
+				bool expandRight = true;
+				bool expandLeft = true;
 				for (int i = 0; i < p.height; i++) {
 					if (!checkValid(p.x + p.width, p.y - i) ||
 						grid[p.x + p.width, p.y - i] == null ||
@@ -330,9 +356,12 @@ namespace PuzzleFighter {
 					p.x--;
 					p.width++;
 				}
+				changed = expandUp || expandDown || expandLeft || expandRight;
 			}
+			return changed;
 		}
-		public void conbinePowerGems() {
+		public bool conbinePowerGems() {
+			bool changed = false;
 			List<PowerGem> toRemove = new List<PowerGem>();
 			foreach (PowerGem p1 in powerGems) {
 				foreach (PowerGem p2 in powerGems) {
@@ -348,7 +377,9 @@ namespace PuzzleFighter {
 			}
 			foreach (PowerGem p in toRemove) {
 				powerGems.Remove(p);
+				changed = true;
 			}
+			return changed;
 		}
 		#endregion
 
