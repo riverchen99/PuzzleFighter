@@ -34,6 +34,7 @@ namespace PuzzleFighter {
 			this.ResizeEnd += new EventHandler(PuzzleFighterGame_CreateBackBuffer);
 			this.Load += new EventHandler(PuzzleFighterGame_CreateBackBuffer);
 			this.Paint += new PaintEventHandler(PuzzleFighterGame_Paint);
+			//this.FormClosing += new FormClosingEventHandler(PuzzleFighterGame_FormClosing);
 			b1 = new Board(xSize, ySize, 1);
 			b2 = new Board(xSize, ySize, 2);
 
@@ -76,9 +77,14 @@ namespace PuzzleFighter {
 				}
 			}
 		}
-
+		/*
+		private void PuzzleFighterGame_FormClosing(object sender, FormClosingEventArgs e) {
+			b1Timer.Dispose();
+			b2Timer.Dispose();
+		}
+		*/
 		private void updateBoard(Board b) {
-			Console.WriteLine("thread id:{0} Time:{1} ", Thread.CurrentThread.ManagedThreadId.ToString(), DateTime.Now.ToLongTimeString());
+			//Console.WriteLine("thread id:{0} Time:{1} ", Thread.CurrentThread.ManagedThreadId.ToString(), DateTime.Now.ToLongTimeString());
 			bool canCombo;
 			int sendCount = 0;
 			int comboCount = 0;
@@ -110,7 +116,6 @@ namespace PuzzleFighter {
 
 			Board targetBoard = b.id == b1.id ? b2 : b1;
 			sendCount += comboCount > 1 ? (comboCount-1)*3 : 0;
-			Console.WriteLine(sendCount);
 			//sendCount = (int)(sendCount * .66);
 			b.lockBuffer -= sendCount;
 			if (b.lockBuffer < 0) {
@@ -118,6 +123,7 @@ namespace PuzzleFighter {
 				b.lockBuffer = 0;
 			}
 			sendLockBlocks(b);
+			b.checkGameOver();
 			if (!b.gameOver) {
 				b.newPiece();
 			}

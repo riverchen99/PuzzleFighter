@@ -95,8 +95,9 @@ namespace PuzzleFighter {
 			}
 			pieceCount++;
 		}
-		public void checkGameOver() {
+		public bool checkGameOver() {
 			gameOver = !(grid[xSize / 2, 0] == null && grid[xSize / 2, 1] == null);
+			return gameOver;
 		}
 		#region drop
 		public void lockPiece() {
