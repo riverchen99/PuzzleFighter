@@ -19,6 +19,7 @@ namespace PuzzleFighter {
 		public bool gameOver { get; set; }
 		public int id { get; set; }
 		public int lockBuffer { get; set; }
+		public int pieceOffset { get; set; }
 		private List<Block> connected;
 		private List<Block> connectedLockBlocks;
 
@@ -34,6 +35,7 @@ namespace PuzzleFighter {
 			gameOver = false;
 			this.id = id;
 			lockBuffer = 0;
+			pieceOffset = 0;
 		}
 
 		public bool checkValid(int x, int y) {
@@ -55,30 +57,32 @@ namespace PuzzleFighter {
 			return false;
 		}
 		public void rotateCurrent(Piece.rotateDirection d) {
-			int[] pieceVector = new int[2] { currentPiece.b1.x - currentPiece.b2.x, currentPiece.b1.y - currentPiece.b2.y };
-			Complex i = new Complex(pieceVector[0], pieceVector[1]);
-			Complex delta = d == Piece.rotateDirection.CCW ? Complex.Multiply(i, new Complex(0, 1)) : Complex.Multiply(i, new Complex(0, -1));
-			if (checkValid(currentPiece.b2.x + (int)delta.Real, currentPiece.b2.y + (int)delta.Imaginary) &&
-				checkValid(currentPiece.b1.x, currentPiece.b1.y) &&
-				grid[currentPiece.b2.x + (int)delta.Real, currentPiece.b2.y + (int)delta.Imaginary] == null &&
-				grid[currentPiece.b1.x, currentPiece.b1.y] == null) {
-				currentPiece.b1.x = currentPiece.b2.x + (int)delta.Real;
-				currentPiece.b1.y = currentPiece.b2.y + (int)delta.Imaginary;
-			} else if (checkValid(currentPiece.b2.x - (int)delta.Real, currentPiece.b2.y - (int)delta.Imaginary) &&
-						checkValid(currentPiece.b1.x, currentPiece.b1.y) &&
-						grid[currentPiece.b2.x - (int)delta.Real, currentPiece.b2.y - (int)delta.Imaginary] == null &&
-						grid[currentPiece.b2.x - (int)delta.Real, currentPiece.b2.y - (int)delta.Imaginary] == null) {
-				currentPiece.b1.x = currentPiece.b2.x;
-				currentPiece.b1.y = currentPiece.b2.y;
-				currentPiece.b2.x -= (int)delta.Real;
-				currentPiece.b2.y -= (int)delta.Imaginary;
-			} else {
-				int tx = currentPiece.b2.x;
-				int ty = currentPiece.b2.y;
-				currentPiece.b2.x = currentPiece.b1.x;
-				currentPiece.b2.y = currentPiece.b1.y;
-				currentPiece.b1.x = tx;
-				currentPiece.b1.y = ty;
+			if (currentPiece != null) {
+				int[] pieceVector = new int[2] { currentPiece.b1.x - currentPiece.b2.x, currentPiece.b1.y - currentPiece.b2.y };
+				Complex i = new Complex(pieceVector[0], pieceVector[1]);
+				Complex delta = d == Piece.rotateDirection.CCW ? Complex.Multiply(i, new Complex(0, 1)) : Complex.Multiply(i, new Complex(0, -1));
+				if (checkValid(currentPiece.b2.x + (int)delta.Real, currentPiece.b2.y + (int)delta.Imaginary) &&
+					checkValid(currentPiece.b1.x, currentPiece.b1.y) &&
+					grid[currentPiece.b2.x + (int)delta.Real, currentPiece.b2.y + (int)delta.Imaginary] == null &&
+					grid[currentPiece.b1.x, currentPiece.b1.y] == null) {
+					currentPiece.b1.x = currentPiece.b2.x + (int)delta.Real;
+					currentPiece.b1.y = currentPiece.b2.y + (int)delta.Imaginary;
+				} else if (checkValid(currentPiece.b2.x - (int)delta.Real, currentPiece.b2.y - (int)delta.Imaginary) &&
+							checkValid(currentPiece.b1.x, currentPiece.b1.y) &&
+							grid[currentPiece.b2.x - (int)delta.Real, currentPiece.b2.y - (int)delta.Imaginary] == null &&
+							grid[currentPiece.b2.x - (int)delta.Real, currentPiece.b2.y - (int)delta.Imaginary] == null) {
+					currentPiece.b1.x = currentPiece.b2.x;
+					currentPiece.b1.y = currentPiece.b2.y;
+					currentPiece.b2.x -= (int)delta.Real;
+					currentPiece.b2.y -= (int)delta.Imaginary;
+				} else {
+					int tx = currentPiece.b2.x;
+					int ty = currentPiece.b2.y;
+					currentPiece.b2.x = currentPiece.b1.x;
+					currentPiece.b2.y = currentPiece.b1.y;
+					currentPiece.b1.x = tx;
+					currentPiece.b1.y = ty;
+				}
 			}
 		}
 		#endregion
@@ -91,17 +95,16 @@ namespace PuzzleFighter {
 			}
 			pieceCount++;
 		}
+		public void checkGameOver() {
+			gameOver = !(grid[xSize / 2, 0] == null && grid[xSize / 2, 1] == null);
+		}
 		#region drop
 		public void lockPiece() {
 			grid[currentPiece.b1.x, currentPiece.b1.y] = currentPiece.b1;
 			grid[currentPiece.b2.x, currentPiece.b2.y] = currentPiece.b2;
 			currentPiece = null;
 			dropBlocks(); // inefficient, fix later
-			if (grid[xSize / 2, 0] == null && grid[xSize / 2, 1] == null) {
-				;
-			} else {
-				gameOver = true;
-			}
+			checkGameOver();
 		}
 		public bool dropBlocks() {
 			bool changed = false;
@@ -192,8 +195,8 @@ namespace PuzzleFighter {
 		#region clearing
 		public int clearBlocks() {
 			int sendAmount = 0;
-			List<Block> blocksToRemove = new List<Block>();
-			List<PowerGem> gemsToRemove = new List<PowerGem>();
+			HashSet<Block> blocksToRemove = new HashSet<Block>();
+			HashSet<PowerGem> gemsToRemove = new HashSet<PowerGem>();
 			for (int i = 0; i < xSize; i++) {
 				for (int j = 0; j < ySize; j++) {
 					if (grid[i, j] != null && grid[i, j].type == BlockType.Clear && !blocksToRemove.Contains(grid[i, j])) {
@@ -232,9 +235,10 @@ namespace PuzzleFighter {
 				score++;
 				sendAmount++;
 			}
+			//sendAmount /= 2;
 			foreach (PowerGem p in gemsToRemove) {
 				powerGems.Remove(p);
-				sendAmount += (p.width * p.height / 2);
+				sendAmount += (p.width * p.height * 2);
 			}
 			return sendAmount;
 		}

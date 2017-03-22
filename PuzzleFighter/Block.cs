@@ -34,4 +34,12 @@ namespace PuzzleFighter {
 			this.inPowerGem = false;
 		}
 	}
+	public class BlockEqualityComparer : IEqualityComparer<Block> {
+		public bool Equals(Block a, Block b) {
+			return a.x == b.x && a.y == b.y;
+		}
+		public int GetHashCode(Block a) {
+			return a.GetHashCode();
+		}
+	}
 }

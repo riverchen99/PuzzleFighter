@@ -14,7 +14,7 @@ namespace PuzzleFighter {
 		int xSize = 6;
 		int ySize = 15;
 		int gridSize = 25;
-		int pieceDropInterval = 1000;
+		int pieceDropInterval = 500;
 		int blockDropInterval = 50;
 		int clearDelay = 100;
 
@@ -25,6 +25,7 @@ namespace PuzzleFighter {
 		System.Threading.Timer b2Timer;
 		TimerStateObject b1StateObject;
 		TimerStateObject b2StateObject;
+
 		public PuzzleFighterGame() {
 			InitializeComponent();
 			this.SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.DoubleBuffer, true);
@@ -37,64 +38,46 @@ namespace PuzzleFighter {
 			b2 = new Board(xSize, ySize, 2);
 
 			b1StateObject = new TimerStateObject(b1);
+			b1StateObject.gridSize = gridSize;
 			b2StateObject = new TimerStateObject(b2);
+			b2StateObject.gridSize = gridSize;
 
-			b1Timer = new System.Threading.Timer(new System.Threading.TimerCallback(TimerTask), b1StateObject, 0, pieceDropInterval);
+			b1Timer = new System.Threading.Timer(new System.Threading.TimerCallback(TimerTask), b1StateObject, 0, pieceDropInterval/gridSize);
 			b1StateObject.TimerReference = b1Timer;
 
-			b2Timer = new System.Threading.Timer(new System.Threading.TimerCallback(TimerTask), b2StateObject, 0, pieceDropInterval);
+			b2Timer = new System.Threading.Timer(new System.Threading.TimerCallback(TimerTask), b2StateObject, 0, pieceDropInterval/gridSize);
 			b2StateObject.TimerReference = b2Timer;
-			/*
-			b1Timer.Interval = pieceDropInterval; // ms
-			b1Timer.Tick += new EventHandler(b1Timer_Tick);
-			b1Timer.Start();
-			
-			b2Timer.Interval = pieceDropInterval; // ms
-			b2Timer.Tick += new EventHandler(b2Timer_Tick);
-			b2Timer.Start();
-			*/
 		}
-		/*
-		void b1Timer_Tick(object sender, EventArgs e) {
-			if (b1.gameOver) {
-				b1Timer.Stop();
-			}
-			if (b1.moveCurrent(Piece.Direction.Down)) {
-				updateBoard(b1);
-			}
-			draw();
-		}
-		void b2Timer_Tick(object sender, EventArgs e) {
-			if (b2.gameOver) {
-				b2Timer.Stop();
-			}
-			if (b2.moveCurrent(Piece.Direction.Down)) {
-				updateBoard(b2);
-			}
-			draw();
-		}
-		*/
-		private class TimerStateObject {
+
+		public class TimerStateObject {
 			public System.Threading.Timer TimerReference;
 			public Board b;
 			public bool hardDrop = false;
+			public int gridSize;
 			public TimerStateObject(Board b) {
 				this.b = b;
+				this.b.pieceOffset = -gridSize;
 			}
 		}
 		private void TimerTask(object StateObject) {
 			TimerStateObject State = (TimerStateObject)StateObject;
-			if (State.b.gameOver) { State.TimerReference.Dispose(); }
-			if (State.b.currentPiece != null) {
-				if (State.b.moveCurrent(Piece.Direction.Down) || State.hardDrop) {
-					updateBoard(State.b);
-				}
-				State.hardDrop = false;
+			if (State.b.pieceOffset < 0 && !State.hardDrop) {
+				State.b.pieceOffset++;
 				draw();
+			} else {
+				State.b.pieceOffset = -gridSize;
+				if (State.b.gameOver) { State.TimerReference.Dispose(); }
+				if (State.b.currentPiece != null) {
+					if (State.b.moveCurrent(Piece.Direction.Down) || State.hardDrop) {
+						updateBoard(State.b);
+					}
+					State.hardDrop = false;
+					draw();
+				}
 			}
 		}
 
-		int updateBoard(Board b) {
+		private void updateBoard(Board b) {
 			Console.WriteLine("thread id:{0} Time:{1} ", Thread.CurrentThread.ManagedThreadId.ToString(), DateTime.Now.ToLongTimeString());
 			bool canCombo;
 			int sendCount = 0;
@@ -124,13 +107,20 @@ namespace PuzzleFighter {
 					Thread.Sleep(blockDropInterval);
 				}
 			} while (canCombo);
+
 			Board targetBoard = b.id == b1.id ? b2 : b1;
-			targetBoard.lockBuffer += (comboCount - 1) * 3 + sendCount;
+			sendCount += comboCount > 1 ? (comboCount-1)*3 : 0;
+			Console.WriteLine(sendCount);
+			//sendCount = (int)(sendCount * .66);
+			b.lockBuffer -= sendCount;
+			if (b.lockBuffer < 0) {
+				targetBoard.lockBuffer -= b.lockBuffer;
+				b.lockBuffer = 0;
+			}
 			sendLockBlocks(b);
 			if (!b.gameOver) {
 				b.newPiece();
 			}
-			return comboCount + sendCount;
 		}
 
 		BlockColor[][] pattern1 = new BlockColor[][] {
@@ -145,16 +135,17 @@ namespace PuzzleFighter {
 				new BlockColor[] { BlockColor.Green, BlockColor.Green, BlockColor.Green, BlockColor.Blue, BlockColor.Blue, BlockColor.Blue, },
 				new BlockColor[] { BlockColor.Green, BlockColor.Green, BlockColor.Green, BlockColor.Blue, BlockColor.Blue, BlockColor.Blue, },
 		};
-		void sendLockBlocks(Board targetBoard) {
+		private void sendLockBlocks(Board targetBoard) {
 			BlockColor[][] pattern = targetBoard.id == 1 ? pattern1 : pattern2;
 			int patternRow = 0;
 			while (targetBoard.lockBuffer > 0) {
 				if (targetBoard.lockBuffer > xSize) {
 					targetBoard.sendLockBlocks(xSize, pattern[patternRow % pattern.Length], false);
+					targetBoard.lockBuffer -= xSize;
 				} else {
 					targetBoard.sendLockBlocks(targetBoard.lockBuffer, pattern[patternRow % pattern.Length], false);
+					targetBoard.lockBuffer = 0;
 				}
-				targetBoard.lockBuffer -= xSize;
 				patternRow++;
 				if (!targetBoard.dropOnce()) {
 					targetBoard.gameOver = true;
@@ -162,16 +153,14 @@ namespace PuzzleFighter {
 				draw();
 				Thread.Sleep(blockDropInterval);
 			}
-			targetBoard.lockBuffer = 0;
 			do {
 				draw();
 				Thread.Sleep(blockDropInterval);
 			} while (targetBoard.dropOnce() | targetBoard.dropPowerGemsOnce());
-
 		}
 		int colorIndex = 0;
 		int typeIndex = 0;
-		void p1_KeyPress(object sender, KeyPressEventArgs e) {
+		private void p1_KeyPress(object sender, KeyPressEventArgs e) {
 			switch (e.KeyChar) {
 				case 'a':
 					b1.moveCurrent(Piece.Direction.Left);
@@ -183,10 +172,8 @@ namespace PuzzleFighter {
 					b1.moveCurrent(Piece.Direction.Right);
 					break;
 				case 'w':
-					//updateBoard(b1);
-					//b1.lockPiece();
 					b1StateObject.hardDrop = true;
-					b1Timer.Change(0, pieceDropInterval);
+					//b1Timer.Change(0, pieceDropInterval);
 					break;
 				case 'f':
 					b1.rotateCurrent(Piece.rotateDirection.CW);
@@ -194,6 +181,7 @@ namespace PuzzleFighter {
 				case 'g':
 					b1.rotateCurrent(Piece.rotateDirection.CCW);
 					break;
+				// debug
 				case 'r':
 					b1.currentPiece.b1.color = BlockColor.Red;
 					b1.currentPiece.b1.type = BlockType.Normal;
@@ -223,7 +211,7 @@ namespace PuzzleFighter {
 			}
 			draw();
 		}
-		void p2_KeyPress(object sender, KeyPressEventArgs e) {
+		private void p2_KeyPress(object sender, KeyPressEventArgs e) {
 			switch (e.KeyChar) {
 				case 'j':
 					b2.moveCurrent(Piece.Direction.Left);
@@ -236,8 +224,7 @@ namespace PuzzleFighter {
 					break;
 				case 'i':
 					b2StateObject.hardDrop = true;
-					b2Timer.Change(0, pieceDropInterval);
-					//updateBoard(b2);
+					//b2Timer.Change(0, pieceDropInterval);
 					break;
 				case ';':
 					b2.rotateCurrent(Piece.rotateDirection.CW);
@@ -249,19 +236,19 @@ namespace PuzzleFighter {
 			draw();
 		}
 		#region graphics
-		void PuzzleFighterGame_Paint(object sender, PaintEventArgs e) {
+		private void PuzzleFighterGame_Paint(object sender, PaintEventArgs e) {
 			if (Backbuffer != null) {
 				e.Graphics.DrawImageUnscaled(Backbuffer, Point.Empty);
 			}
 		}
-		void PuzzleFighterGame_CreateBackBuffer(object sender, EventArgs e) {
+		private void PuzzleFighterGame_CreateBackBuffer(object sender, EventArgs e) {
 			if (Backbuffer != null) {
 				Backbuffer.Dispose();
 			}
 			Backbuffer = new Bitmap(ClientSize.Width, ClientSize.Height);
 		}
-		delegate void drawCallback();
-		void draw() {
+		private delegate void drawCallback();
+		private void draw() {
 			if (this.InvokeRequired) {
 				drawCallback d = new drawCallback(draw);
 				this.Invoke(d, new object[] { });
@@ -277,19 +264,19 @@ namespace PuzzleFighter {
 				}
 			}
 		}
-		void drawBoard(Graphics g, Board b) {
+		private void drawBoard(Graphics g, Board b) {
 			int xOffset = b.id == 1 ? 0 : 300;
 			int yOffset = 0;
 			drawGrid(g, b, xOffset, yOffset);
 			if (b.currentPiece != null) {
-				drawBlock(g, b.currentPiece.b1, xOffset, yOffset);
-				drawBlock(g, b.currentPiece.b2, xOffset, yOffset);
+				drawBlock(g, b.currentPiece.b1, xOffset, yOffset+b.pieceOffset);
+				drawBlock(g, b.currentPiece.b2, xOffset, yOffset+b.pieceOffset);
 			}
 			drawNextPiece(g, b, xOffset, yOffset);
 			drawPowerGems(g, b, xOffset, yOffset);
 			drawText(g, b, xOffset, yOffset);
 		}
-		void drawGrid(Graphics g, Board b, int xOffset, int yOffset) {
+		private void drawGrid(Graphics g, Board b, int xOffset, int yOffset) {
 			Pen p = new Pen(Color.White, 1);
 			for (int i = 0; i < xSize; i++) {
 				for (int j = 0; j < ySize; j++) {
@@ -301,7 +288,7 @@ namespace PuzzleFighter {
 			}
 			p.Dispose();
 		}
-		void drawBlock(Graphics g, Block b, int xOffset, int yOffset) {
+		private void drawBlock(Graphics g, Block b, int xOffset, int yOffset) {
 			SolidBrush brush = new SolidBrush(Color.FromName(b.color.ToString()));
 			if (b.type == BlockType.Normal) {
 				g.FillRectangle(brush, xOffset + gridSize * b.x, yOffset + gridSize * b.y, gridSize, gridSize);
@@ -318,7 +305,7 @@ namespace PuzzleFighter {
 			}
 			brush.Dispose();
 		}
-		void drawNextPiece(Graphics g, Board b, int xOffset, int yOffset) {
+		private void drawNextPiece(Graphics g, Board b, int xOffset, int yOffset) {
 			SolidBrush brush = new SolidBrush(Color.FromName(b.nextPiece.b1.color.ToString()));
 			if (b.nextPiece.b1.type == BlockType.Normal) {
 				g.FillRectangle(brush, xOffset + gridSize * (xSize + 1), yOffset + gridSize, gridSize, gridSize);
@@ -342,16 +329,17 @@ namespace PuzzleFighter {
 				g.FillPie(brush, xOffset + gridSize * (xSize + 1), yOffset + gridSize * 2, gridSize, gridSize, -60, -60);
 			}
 		}
-		void drawPowerGems(Graphics g, Board b, int xOffset, int yOffset) {
+		private void drawPowerGems(Graphics g, Board b, int xOffset, int yOffset) {
 			Pen pen = new Pen(Color.Tomato, 3);
 			foreach (PowerGem p in b.powerGems) {
 				g.DrawRectangle(pen, xOffset + gridSize * p.x, yOffset + gridSize * p.y - gridSize * (p.height - 1), gridSize * p.width, gridSize * p.height);
 			}
 		}
-		void drawText(Graphics g, Board b, int xOffset, int yOffset) {
+		private void drawText(Graphics g, Board b, int xOffset, int yOffset) {
 			Font f = new Font("Comic Sans", 16);
 			SolidBrush br = new SolidBrush(Color.White);
 			g.DrawString(b.score.ToString(), f, br, xOffset + gridSize * (xSize + 1), yOffset + gridSize * 3);
+			g.DrawString(b.lockBuffer.ToString(), f, br, xOffset + gridSize * (xSize + 1), yOffset + gridSize * 4);
 			for (int i = 0; i < xSize; i++) {
 				g.DrawString(i.ToString(), f, br, xOffset + i * gridSize, yOffset + ySize * gridSize);
 			}
