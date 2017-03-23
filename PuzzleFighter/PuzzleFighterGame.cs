@@ -272,23 +272,27 @@ namespace PuzzleFighter {
 		}
 		private void drawBoard(Graphics g, Board b) {
 			int xOffset = b.id == 1 ? 0 : 300;
-			int yOffset = 0;
-			drawGrid(g, b, xOffset, yOffset);
+			int yOffset = -gridSize;
 			if (b.currentPiece != null) {
 				drawBlock(g, b.currentPiece.b1, xOffset, yOffset+b.pieceOffset);
 				drawBlock(g, b.currentPiece.b2, xOffset, yOffset+b.pieceOffset);
 			}
+			drawGrid(g, b, xOffset, yOffset);
 			drawNextPiece(g, b, xOffset, yOffset);
 			drawPowerGems(g, b, xOffset, yOffset);
 			drawText(g, b, xOffset, yOffset);
 		}
 		private void drawGrid(Graphics g, Board b, int xOffset, int yOffset) {
 			Pen p = new Pen(Color.White, 1);
+			SolidBrush br = new SolidBrush(Color.FromArgb(128, 128, 128, 128));
 			for (int i = 0; i < xSize; i++) {
-				for (int j = 0; j < ySize; j++) {
+				for (int j = 1; j < ySize; j++) {
 					g.DrawRectangle(p, xOffset + gridSize * i, yOffset + gridSize * j, gridSize, gridSize);
 					if (b.grid[i, j] != null) {
 						drawBlock(g, b.grid[i, j], xOffset, yOffset);
+					}
+					if (j == 1 && i != xSize / 2) {
+						g.FillRectangle(br, xOffset + gridSize * i, yOffset + gridSize * j, gridSize, gridSize);
 					}
 				}
 			}
